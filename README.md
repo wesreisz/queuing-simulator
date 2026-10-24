@@ -44,7 +44,7 @@ Utilization is how busy a stage is: arrivals divided by capacity. Anything at or
 | Agentic Development | 1.2 | 3 x 4.0 | 1 x 2.0 | 1 x 2.0 | 10% / 60% / 60% |
 | Code Review Bottleneck | 4.0 | 3 x 4.0 | 1 x 2.0 | 1 x 2.0 | 33% / 200% / 200% |
 
-Stage columns are written as servers x service rate per day. All scenarios turn off blocking, rework, review rejection and whale tasks so the effect of capacity alone is visible. You can add that friction afterwards with the sliders.
+Stage columns are written as servers x service rate per day. All scenarios turn off blocking, rework and review rejection so the effect of capacity alone is visible. You can add that friction afterwards with the sliders.
 
 ### Healthy Traditional Flow
 
@@ -68,9 +68,9 @@ Agentic Development with demand raised to 4 items a day to match the new coding 
 
 ## Reading the screen
 
-- **Dots** are work items. Green is flowing, yellow has been waiting in a queue for more than a day, red is blocked, and blue is rework that was sent back. Larger dots are whale tasks (5x the normal size).
+- **Dots** are work items. Green is flowing, yellow has been waiting in a queue for more than a day, pink is blocked, and blue is rework that was sent back.
 - **Circles in each stage** are servers. A filled circle is busy; an empty circle marked S is idle slack.
-- **Queues** resize as work piles up. The Backlog turns red above 50 items, and PRs and Ready for QA turn red above 30.
+- **Queues** resize as work piles up. The Backlog turns pink above 50 items, and PRs and Ready for QA turn pink above 30.
 - **Metrics** show items done, WIP against the WIP limit for each stage, flow efficiency (time being worked on divided by total lead time), the most utilized stage and which stage is the bottleneck, theoretical and actual lead time, and throughput per sprint (10 days).
 - **Queue Pressure by Stage** charts each stage's WIP as a percentage of its WIP limit over time.
 
@@ -80,7 +80,6 @@ Agentic Development with demand raised to 4 items a day to match the new coding 
 - **Incoming Flow**: arrival rate and simulation speed.
 - **Team Capacity**: servers, service rate and WIP limit for each stage.
 - **System Friction**: blocking in code dev, review rejection rate and QA rework rate.
-- **Work Variability**: whale mode, where some tasks are 5x the normal size.
 - **Play, pause, reset and the legend** are in the top right of the canvas. Elapsed time in sprints is in the top left.
 
 ## Model assumptions

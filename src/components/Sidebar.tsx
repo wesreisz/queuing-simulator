@@ -1,7 +1,6 @@
 import { useState, type ReactNode } from 'react';
 import {
   Activity,
-  Anchor,
   ChevronDown,
   ChevronUp,
   Clock,
@@ -10,7 +9,6 @@ import {
   ShieldAlert,
   Users,
   Waves,
-  Zap,
   Timer,
 } from 'lucide-react';
 import { DAYS_PER_SPRINT, type Metrics, type Params } from '../sim/engine';
@@ -292,22 +290,6 @@ export function Sidebar({
           step={0.01}
           format={pct}
           onChange={(v) => onChange({ reworkPct: v })}
-        />
-      </Section>
-
-      <Section title="Work Variability" icon={<Anchor size={12} />}>
-        <label className="toggle">
-          <input type="checkbox" checked={params.whaleMode} onChange={(e) => onChange({ whaleMode: e.target.checked })} />
-          <Zap size={12} /> Whale mode (5x tasks)
-        </label>
-        <Slider
-          label="Whale probability"
-          value={params.whaleProb}
-          min={0}
-          max={0.6}
-          step={0.01}
-          format={pct}
-          onChange={(v) => onChange({ whaleProb: v })}
         />
       </Section>
     </aside>

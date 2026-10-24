@@ -90,10 +90,6 @@ export default function App() {
                       <span className="legend-ring" />
                       Idle server (S = slack)
                     </div>
-                    <div className="legend-item">
-                      <span className="legend-dot whale" />
-                      Whale task (5x size)
-                    </div>
                   </div>
                 )}
               </div>

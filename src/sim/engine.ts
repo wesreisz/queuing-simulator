@@ -24,8 +24,6 @@ export interface Item {
   stage: Stage;
   blocked: boolean;
   rework: boolean;
-  whale: boolean;
-  size: number;
   arrivedAt: number;
   enqueuedAt: number;
   valueAdded: number;
@@ -50,9 +48,6 @@ export interface Params {
   blockingPct: number;
   reviewRejectPct: number;
   reworkPct: number;
-  whaleMode: boolean;
-  whaleProb: number;
-  whaleMultiplier: number;
   devWipLimit: number;
   reviewWipLimit: number;
   qaWipLimit: number;
@@ -143,15 +138,12 @@ function enqueue(item: Item, queue: Item[], stage: Stage, now: number) {
   queue.push(item);
 }
 
-function spawn(data: SimData, params: Params) {
-  const whale = params.whaleMode && Math.random() < params.whaleProb;
+function spawn(data: SimData) {
   const item: Item = {
     id: data.nextId++,
     stage: 'queue1',
     blocked: false,
     rework: false,
-    whale,
-    size: whale ? params.whaleMultiplier : 1,
     arrivedAt: data.time,
     enqueuedAt: data.time,
     valueAdded: 0,
@@ -168,7 +160,7 @@ function substep(data: SimData, params: Params, dt: number) {
     if (!Number.isFinite(data.nextArrival)) data.nextArrival = getExponential(params.arrivalRate);
     data.nextArrival -= dt;
     while (data.nextArrival <= 0) {
-      spawn(data, params);
+      spawn(data);
       data.nextArrival += getExponential(params.arrivalRate);
     }
   } else {
@@ -201,7 +193,7 @@ function substep(data: SimData, params: Params, dt: number) {
       const item = data.queue1.shift()!;
       item.stage = 'dev';
       s.item = item;
-      s.remaining = getExponential(params.devRate) * item.size;
+      s.remaining = getExponential(params.devRate);
     }
   }
 
@@ -224,7 +216,7 @@ function substep(data: SimData, params: Params, dt: number) {
       const item = data.queueReview.shift()!;
       item.stage = 'review';
       s.item = item;
-      s.remaining = getExponential(params.reviewRate) * item.size;
+      s.remaining = getExponential(params.reviewRate);
     }
   }
 
@@ -253,7 +245,7 @@ function substep(data: SimData, params: Params, dt: number) {
       item.stage = 'qa';
       item.rework = false;
       s.item = item;
-      s.remaining = getExponential(params.qaRate) * item.size;
+      s.remaining = getExponential(params.qaRate);
     }
   }
 
@@ -314,16 +306,20 @@ export function mmcTimeInSystem(lambda: number, mu: number, c: number): number {
 }
 
 export function computeMetrics(data: SimData, params: Params): Metrics {
-  const meanSize = params.whaleMode ? 1 + params.whaleProb * (params.whaleMultiplier - 1) : 1;
   const lambdaQa = params.arrivalRate / Math.max(0.01, 1 - params.reworkPct);
   const lambdaDev = lambdaQa / Math.max(0.01, 1 - params.reviewRejectPct);
-  const mu1 = params.devRate / meanSize;
-  const mu2 = params.reviewRate / meanSize;
-  const mu3 = params.qaRate / meanSize;
+  const mu1 = params.devRate;
+  const mu2 = params.reviewRate;
+  const mu3 = params.qaRate;
+  const devCapacity = params.devServers * mu1;
+  const reviewCapacity = params.reviewServers * mu2;
+  // A stage can only receive what the stage before it is able to pass on.
+  const lambdaReview = Math.min(lambdaDev, devCapacity);
+  const lambdaQaReachable = Math.min(lambdaReview, reviewCapacity) * (1 - params.reviewRejectPct);
   const rhos = [
-    lambdaDev / (params.devServers * mu1),
-    lambdaDev / (params.reviewServers * mu2),
-    lambdaQa / (params.qaServers * mu3),
+    lambdaDev / devCapacity,
+    lambdaReview / reviewCapacity,
+    Math.min(lambdaQa, lambdaQaReachable) / (params.qaServers * mu3),
   ];
   const maxRho = Math.max(...rhos);
 
@@ -338,7 +334,7 @@ export function computeMetrics(data: SimData, params: Params): Metrics {
     backlog: data.queue1.length,
     flowEfficiency: data.totalLead > 0 ? (data.totalValueAdded / data.totalLead) * 100 : 0,
     maxUtilisation: maxRho * 100,
-    bottleneck: (rhos.lastIndexOf(maxRho) + 1) as 1 | 2 | 3,
+    bottleneck: (rhos.indexOf(maxRho) + 1) as 1 | 2 | 3,
     theoreticalLead:
       mmcTimeInSystem(lambdaDev, mu1, params.devServers) +
       mmcTimeInSystem(lambdaDev, mu2, params.reviewServers) +

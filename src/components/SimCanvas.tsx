@@ -120,7 +120,6 @@ function drawServers(ctx: CanvasRenderingContext2D, servers: Server[], cx: numbe
       ctx.strokeStyle = blocked ? BRAND.flamingoPink : BRAND.talcWhite;
       ctx.lineWidth = 1.5;
       ctx.stroke();
-      if (s.item.whale) label(ctx, 'W', cx + 20, y - 14, BRAND.turmericYellow);
     } else {
       ctx.fillStyle = UI.panelDeep;
       ctx.fill();
@@ -137,9 +136,8 @@ function drawServers(ctx: CanvasRenderingContext2D, servers: Server[], cx: numbe
 }
 
 function drawItem(ctx: CanvasRenderingContext2D, item: Item, now: number, r = 4) {
-  const radius = item.whale ? r * 1.6 : r;
   ctx.beginPath();
-  ctx.arc(item.x, item.y, radius, 0, Math.PI * 2);
+  ctx.arc(item.x, item.y, r, 0, Math.PI * 2);
   ctx.fillStyle = STATE_COLORS[itemState(item, now)];
   ctx.fill();
   ctx.strokeStyle = 'rgba(255,255,255,0.85)';

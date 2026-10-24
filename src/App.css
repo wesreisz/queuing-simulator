@@ -344,12 +344,6 @@
   border: 1px solid var(--talc-white);
 }
 
-.legend-dot.whale {
-  width: 13px;
-  height: 13px;
-  background: var(--jade-green);
-}
-
 .legend-ring {
   width: 11px;
   height: 11px;

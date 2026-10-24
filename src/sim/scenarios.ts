@@ -11,9 +11,6 @@ export const DEFAULT_PARAMS: Params = {
   blockingPct: 0,
   reviewRejectPct: 0,
   reworkPct: 0,
-  whaleMode: false,
-  whaleProb: 0.25,
-  whaleMultiplier: 5,
   devWipLimit: 15,
   reviewWipLimit: 8,
   qaWipLimit: 8,
@@ -27,7 +24,7 @@ export interface Scenario {
   params: Partial<Params>;
 }
 
-const NO_FRICTION = { blockingPct: 0, reviewRejectPct: 0, reworkPct: 0, whaleMode: false };
+const NO_FRICTION = { blockingPct: 0, reviewRejectPct: 0, reworkPct: 0 };
 
 export const SCENARIOS: Scenario[] = [
   {
