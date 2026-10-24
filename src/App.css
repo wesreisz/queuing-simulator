@@ -1,0 +1,399 @@
+.app {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 40px 24px 48px;
+}
+
+.hero {
+  text-align: center;
+  margin-bottom: 32px;
+}
+
+.hero h1 {
+  font-family: 'DM Serif Display', Georgia, serif;
+  font-weight: 400;
+  font-size: 52px;
+  letter-spacing: -0.5px;
+  margin: 0 0 14px;
+  color: #fff;
+}
+
+.hero p {
+  max-width: 460px;
+  margin: 0 auto;
+  color: #94a3b8;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.sim-panel {
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  height: 640px;
+  border: 1px solid #1e293b;
+  border-radius: 10px;
+  overflow: hidden;
+  background: #0f172a;
+  box-shadow: 0 30px 60px rgba(0, 0, 0, 0.35);
+}
+
+/* Sidebar */
+.sidebar {
+  border-right: 1px solid #1e293b;
+  overflow-y: auto;
+  background: #0d1526;
+}
+
+.section {
+  border-bottom: 1px solid #1e293b;
+}
+
+.section-header {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px;
+  background: none;
+  border: none;
+  color: #94a3b8;
+}
+
+.section-header:hover {
+  color: #e2e8f0;
+}
+
+.section-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+}
+
+.section-body {
+  padding: 0 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.stat-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+}
+
+.stat,
+.card {
+  background: #0b1222;
+  border: 1px solid #1e293b;
+  border-radius: 6px;
+  padding: 8px;
+}
+
+.stat-label {
+  font-size: 8.5px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  color: #64748b;
+  margin-bottom: 4px;
+}
+
+.stat-value {
+  font-size: 15px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.stat-limit {
+  font-size: 10px;
+  font-weight: 500;
+  color: #64748b;
+}
+
+.card-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+
+.card-label {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 4px;
+  font-size: 10px;
+  color: #cbd5e1;
+  margin-bottom: 8px;
+  min-height: 24px;
+}
+
+.card-value {
+  font-size: 17px;
+  font-weight: 700;
+  color: #f8fafc;
+  font-variant-numeric: tabular-nums;
+}
+
+.card-sub {
+  margin-top: 4px;
+  font-size: 8.5px;
+  color: #64748b;
+  line-height: 1.3;
+}
+
+.tone-red { color: #f87171; }
+.tone-amber { color: #fbbf24; }
+.tone-green { color: #34d399; }
+.tone-blue { color: #38bdf8; }
+.tone-purple { color: #a78bfa; }
+.tone-teal { color: #2dd4bf; }
+
+.slider {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 11px;
+  color: #cbd5e1;
+}
+
+.slider-row {
+  display: flex;
+  justify-content: space-between;
+}
+
+.slider-value {
+  color: #38bdf8;
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 10.5px;
+}
+
+.slider input[type='range'] {
+  width: 100%;
+  accent-color: #0ea5e9;
+}
+
+.toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: #cbd5e1;
+}
+
+.scenario-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.scenario {
+  text-align: left;
+  background: #0b1222;
+  border: 1px solid #1e293b;
+  border-radius: 6px;
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.scenario:hover {
+  border-color: #334155;
+}
+
+.scenario.active {
+  border-color: #0ea5e9;
+  background: rgba(14, 165, 233, 0.08);
+}
+
+.scenario-name {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #f1f5f9;
+}
+
+.scenario-summary {
+  font-size: 10px;
+  color: #64748b;
+  line-height: 1.35;
+}
+
+/* Stage area */
+.stage-area {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.canvas-wrap {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+}
+
+.sim-canvas,
+.pressure-canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.time-badge {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  padding: 4px 10px;
+  border: 1px solid #1e293b;
+  border-radius: 6px;
+  background: rgba(11, 18, 34, 0.85);
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 11px;
+  color: #e2e8f0;
+}
+
+.toolbar {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+}
+
+.button-group {
+  display: flex;
+  border: 1px solid #1e293b;
+  border-radius: 6px;
+  overflow: hidden;
+  background: rgba(11, 18, 34, 0.85);
+}
+
+.icon-btn {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 26px;
+  border: none;
+  background: none;
+  color: #94a3b8;
+}
+
+.icon-btn:hover {
+  color: #fff;
+}
+
+.icon-btn.active {
+  color: #38bdf8;
+  background: rgba(14, 165, 233, 0.15);
+}
+
+.legend {
+  position: relative;
+}
+
+.legend-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 28px;
+  padding: 0 10px;
+  border: 1px solid #1e293b;
+  border-radius: 6px;
+  background: rgba(11, 18, 34, 0.85);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.legend-menu {
+  position: absolute;
+  right: 0;
+  top: 34px;
+  z-index: 5;
+  width: 190px;
+  padding: 10px;
+  border: 1px solid #1e293b;
+  border-radius: 8px;
+  background: #0b1222;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4);
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  color: #cbd5e1;
+}
+
+.legend-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  border: 1px solid #fff;
+}
+
+.legend-dot.whale {
+  width: 13px;
+  height: 13px;
+  background: #22c55e;
+}
+
+.legend-ring {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  border: 1.5px solid #0ea5e9;
+}
+
+.chart-wrap {
+  height: 210px;
+  display: flex;
+  flex-direction: column;
+  border-top: 1px solid #1e293b;
+  background: #111c30;
+  padding: 10px 12px 4px;
+}
+
+.chart-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
+.chart-title {
+  padding: 3px 10px;
+  border-radius: 6px;
+  background: rgba(14, 165, 233, 0.15);
+  color: #e0f2fe;
+  font-size: 10.5px;
+  font-weight: 600;
+}
+
+.chart-keys {
+  display: flex;
+  gap: 14px;
+  font-size: 10px;
+  color: #94a3b8;
+}
+
+.chart-keys i {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  margin-right: 4px;
+}
+
+.pressure-canvas {
+  flex: 1;
+  min-height: 0;
+}
