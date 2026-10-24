@@ -5,7 +5,7 @@ const VIEW_W = 1000;
 const VIEW_H = 400;
 const CY = 200;
 
-const QUEUE1_VISIBLE = 8;
+const BACKLOG_ALERT = 50;
 const QUEUE2_COLS = 10;
 const QUEUE2_MIN_ROWS = 3;
 const QUEUE2_MAX_ROWS = 20;
@@ -164,18 +164,18 @@ function render(ctx: CanvasRenderingContext2D, w: number, h: number, data: SimDa
   stageColumn(ctx, DEV, DEV_COLOR, 'STAGE 1: DEV');
   stageColumn(ctx, QA, QA_COLOR, 'STAGE 2: QA');
 
-  // Backlog + Queue 1
-  box(ctx, 150, 180, 36, 40, '#0f172a', 'rgba(148,163,184,0.35)');
-  ctx.font = '700 13px Inter, system-ui, sans-serif';
-  ctx.fillStyle = '#f8fafc';
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.fillText(String(Math.max(0, data.queue1.length - QUEUE1_VISIBLE)), 168, 196);
-  label(ctx, 'BACKLOG', 168, 213, '#94a3b8');
-
-  box(ctx, 196, 180, 130, 40, 'rgba(15,23,42,0.85)', 'rgba(148,163,184,0.35)');
-  label(ctx, 'QUEUE 1 / PIPELINE', 202, 213, '#94a3b8', 'left');
-  dashedLine(ctx, 200, 197, 322, 197);
+  // Backlog
+  const q1Visible = QUEUE2_COLS * QUEUE2_MAX_ROWS;
+  const q1Rows = Math.min(QUEUE2_MAX_ROWS, Math.max(QUEUE2_MIN_ROWS, Math.ceil(data.queue1.length / QUEUE2_COLS)));
+  const q1H = q1Rows * QUEUE2_ROW_GAP + 18;
+  const q1Top = CY - q1H / 2;
+  const q1Backed = data.queue1.length > BACKLOG_ALERT;
+  box(ctx, 216, q1Top, 110, q1H, 'rgba(15,23,42,0.85)', q1Backed ? 'rgba(248,113,113,0.7)' : 'rgba(148,163,184,0.35)');
+  label(ctx, 'BACKLOG', 221, q1Top + q1H + 8, '#94a3b8', 'left');
+  label(ctx, `${data.queue1.length} waiting`, 321, q1Top - 8, q1Backed ? '#f87171' : '#94a3b8', 'right');
+  if (data.queue1.length > q1Visible) {
+    label(ctx, `+${data.queue1.length - q1Visible}`, 321, q1Top + q1H + 8, '#f87171', 'right');
+  }
 
   // Fan-in / fan-out lines around Dev
   dashedLine(ctx, 326, CY, 370, CY);
@@ -231,9 +231,11 @@ function render(ctx: CanvasRenderingContext2D, w: number, h: number, data: SimDa
 
   // Items
   data.queue1.forEach((item, i) => {
-    const slot = Math.min(i, QUEUE1_VISIBLE - 1);
-    moveToward(item, 316 - slot * 15, 197, k);
-    if (i < QUEUE1_VISIBLE) drawItem(ctx, item, now);
+    const slot = Math.min(i, q1Visible - 1);
+    const col = slot % QUEUE2_COLS;
+    const row = Math.floor(slot / QUEUE2_COLS);
+    moveToward(item, 316 - col * 10, q1Top + 9 + QUEUE2_ROW_GAP / 2 + row * QUEUE2_ROW_GAP, k);
+    if (i < q1Visible) drawItem(ctx, item, now, 3);
   });
   data.dev.forEach((s, i) => {
     if (!s.item) return;

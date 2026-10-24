@@ -5,14 +5,12 @@ import {
   ChevronDown,
   ChevronUp,
   Clock,
-  DollarSign,
   Gauge,
   Layers,
   ShieldAlert,
   Users,
   Waves,
   Zap,
-  Coins,
   Timer,
 } from 'lucide-react';
 import { DAYS_PER_SPRINT, type Metrics, type Params } from '../sim/engine';
@@ -82,13 +80,6 @@ function Slider({
 
 const pct = (v: number) => `${Math.round(v * 100)}%`;
 
-function money(v: number): string {
-  if (!Number.isFinite(v)) return '—';
-  if (v >= 1_000_000) return `$${(v / 1_000_000).toFixed(1)}M`;
-  if (v >= 1000) return `$${(v / 1000).toFixed(1)}K`;
-  return `$${Math.round(v)}`;
-}
-
 function Card({ label, icon, value, sub, tone }: { label: string; icon?: ReactNode; value: ReactNode; sub: string; tone?: string }) {
   return (
     <div className="card">
@@ -155,40 +146,7 @@ export function Sidebar({ params, metrics, activeScenario, onChange, onScenario 
             value={metrics.done}
             sub={`${metrics.throughputPerSprint.toFixed(2)} items/sprint`}
           />
-          <Card
-            label="Run-Rate Burn"
-            icon={<DollarSign size={12} className="tone-purple" />}
-            value={money(metrics.burnPerSprint)}
-            sub="All team members, per sprint"
-          />
-          <Card
-            label="Risk-Adjusted Unit Cost"
-            icon={<Coins size={12} className="tone-teal" />}
-            value={money(metrics.unitCost)}
-            sub="Burn ÷ actual completions per sprint"
-          />
         </div>
-      </Section>
-
-      <Section title="Cost" icon={<DollarSign size={12} />}>
-        <Slider
-          label="Dev cost / person / sprint"
-          value={params.devCost}
-          min={2000}
-          max={30000}
-          step={400}
-          format={money}
-          onChange={(v) => onChange({ devCost: v })}
-        />
-        <Slider
-          label="QA cost / person / sprint"
-          value={params.qaCost}
-          min={2000}
-          max={30000}
-          step={400}
-          format={money}
-          onChange={(v) => onChange({ qaCost: v })}
-        />
       </Section>
 
       <Section title="Scenarios" icon={<Layers size={12} />}>

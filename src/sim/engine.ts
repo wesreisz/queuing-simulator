@@ -50,8 +50,6 @@ export interface Params {
   whaleMultiplier: number;
   devWipLimit: number;
   qaWipLimit: number;
-  devCost: number;
-  qaCost: number;
   speed: number;
 }
 
@@ -88,8 +86,6 @@ export interface Metrics {
   theoreticalLead: number;
   actualLead: number;
   throughputPerSprint: number;
-  burnPerSprint: number;
-  unitCost: number;
   history: PressureSample[];
 }
 
@@ -289,22 +285,18 @@ export function computeMetrics(data: SimData, params: Params): Metrics {
 
   const sprints = data.time / DAYS_PER_SPRINT;
   const throughputPerSprint = sprints > 0 ? data.completed / sprints : 0;
-  const burnPerSprint = params.devServers * params.devCost + params.qaServers * params.qaCost;
-
   return {
     time: data.time,
     done: data.completed,
     devWip: devWip(data),
     qaWip: qaWip(data),
-    backlog: Math.max(0, data.queue1.length - 8),
+    backlog: data.queue1.length,
     flowEfficiency: data.totalLead > 0 ? (data.totalValueAdded / data.totalLead) * 100 : 0,
     maxUtilisation: Math.max(rho1, rho2) * 100,
     bottleneck: rho2 >= rho1 ? 2 : 1,
     theoreticalLead: mmcTimeInSystem(lambdaEff, mu1, params.devServers) + mmcTimeInSystem(lambdaEff, mu2, params.qaServers),
     actualLead: data.completed > 0 ? data.totalLead / data.completed : 0,
     throughputPerSprint,
-    burnPerSprint,
-    unitCost: throughputPerSprint > 0 ? burnPerSprint / throughputPerSprint : Infinity,
     history: data.history.slice(),
   };
 }
