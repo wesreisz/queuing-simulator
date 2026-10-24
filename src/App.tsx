@@ -10,10 +10,10 @@ import { STAGE_COLORS } from './theme';
 import './App.css';
 
 const LEGEND = [
-  { color: STATE_COLORS.flowing, text: 'Flowing smoothly' },
-  { color: STATE_COLORS.waiting, text: 'Waiting in queue' },
-  { color: STATE_COLORS.blocked, text: 'Blocked' },
-  { color: STATE_COLORS.rework, text: 'Rework (sent back)' },
+  { color: STATE_COLORS.flowing, text: 'Moving normally' },
+  { color: STATE_COLORS.waiting, text: 'Queued for over a day' },
+  { color: STATE_COLORS.blocked, text: 'Stuck on a blocker' },
+  { color: STATE_COLORS.rework, text: 'Sent back for rework' },
 ];
 
 export default function App() {
@@ -88,7 +88,7 @@ export default function App() {
                     ))}
                     <div className="legend-item">
                       <span className="legend-ring" />
-                      Idle server (S = slack)
+                      Idle capacity (S)
                     </div>
                   </div>
                 )}
@@ -98,7 +98,7 @@ export default function App() {
 
           <div className="chart-wrap">
             <div className="chart-header">
-              <span className="chart-title">Queue Pressure by Stage</span>
+              <span className="chart-title">WIP vs. Limit by Stage</span>
               <span className="chart-keys">
                 <span>
                   <i style={{ background: STAGE_COLORS.dev }} /> Stage 1 (Code Dev)
@@ -115,6 +115,14 @@ export default function App() {
           </div>
         </main>
       </div>
+
+      <footer className="credit">
+        The original idea for this simulator came from a similar one by Ryan Snowden:{' '}
+        <a href="https://www.ryansnowden.com/labs/query-theory-simulator/" target="_blank" rel="noopener noreferrer">
+          Queuing Theory Simulator
+        </a>
+        .
+      </footer>
     </div>
   );
 }

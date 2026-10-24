@@ -6,6 +6,8 @@ AI coding agents are making one part of software delivery (writing code) dramati
 
 This simulator makes that visible. It models a delivery value chain as a series of queues and stages, and lets you watch what happens to flow, queues and lead time as agents are introduced and different parts of the chain become the bottleneck.
 
+The original idea for this simulator came from a similar one by Ryan Snowden: [Queuing Theory Simulator](https://www.ryansnowden.com/labs/query-theory-simulator/).
+
 ## The value chain being modelled
 
 ```mermaid
@@ -69,23 +71,23 @@ Agentic Development with demand raised to 4 items a day to match the new coding 
 ## Reading the screen
 
 - **Dots** are work items. Green is flowing, yellow has been waiting in a queue for more than a day, pink is blocked, and blue is rework that was sent back.
-- **Circles in each stage** are servers. A filled circle is busy; an empty circle marked S is idle slack.
+- **Circles in each stage** are servers. A filled circle is busy; an empty circle marked S is idle capacity.
 - **Queues** resize as work piles up. The Backlog turns pink above 50 items, and PRs and Ready for QA turn pink above 30.
 - **Metrics** show items done, WIP against the WIP limit for each stage, flow efficiency (time being worked on divided by total lead time), the most utilized stage and which stage is the bottleneck, theoretical and actual lead time, and throughput per sprint (10 days).
-- **Queue Pressure by Stage** charts each stage's WIP as a percentage of its WIP limit over time.
+- **WIP vs. Limit by Stage** charts each stage's WIP as a percentage of its WIP limit over time.
 
 ## Controls
 
 - **Scenarios**: load a scenario's settings. By default the simulation keeps running from where it is, so you can watch the system move from one state to another. Tick "Reset simulation when switching" to start each scenario from empty.
-- **Incoming Flow**: arrival rate and simulation speed.
-- **Team Capacity**: servers, service rate and WIP limit for each stage.
-- **System Friction**: blocking in code dev, review rejection rate and QA rework rate.
+- **Demand**: arrival rate and simulation speed.
+- **Capacity**: servers, service rate and WIP limit for each stage.
+- **Friction**: blocking in code dev, review rejection rate and QA rework rate.
 - **Play, pause, reset and the legend** are in the top right of the canvas. Elapsed time in sprints is in the top left.
 
 ## Model assumptions
 
 - Arrivals and service times are random (exponentially distributed), so each stage behaves like an M/M/c queue. Two runs with the same settings will not be identical.
-- Theoretical lead time adds up the M/M/c time in system for each stage for a single pass. It does not account for repeated passes caused by rework, so with rework turned on the actual lead time will be higher.
+- The model estimate of lead time adds up the M/M/c time in system for each stage for a single pass. It does not account for repeated passes caused by rework, so with rework turned on the actual lead time will be higher.
 - Utilization accounts for the extra load rework and review rejection put on each stage.
 - Blocked items hold their code dev server until they are unblocked.
 

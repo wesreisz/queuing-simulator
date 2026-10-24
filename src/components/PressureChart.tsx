@@ -49,8 +49,8 @@ function drawChart(canvas: HTMLCanvasElement | null, w: number, h: number, data:
     ctx.font = '600 9px Inter, system-ui, sans-serif';
     ctx.fillText(text, PAD.left + plotW + 4, y);
   };
-  refLine(100, BRAND.flamingoPink, 'Max');
-  refLine(OPTIMAL_PCT, BRAND.mistGrey, 'Optimal');
+  refLine(100, BRAND.flamingoPink, 'Limit');
+  refLine(OPTIMAL_PCT, BRAND.mistGrey, 'Target');
 
   // Newest sample is pinned to the right edge.
   const offset = HISTORY_LENGTH - data.length;
@@ -88,7 +88,7 @@ function drawChart(canvas: HTMLCanvasElement | null, w: number, h: number, data:
     ctx.fillText(ago.toFixed(1), xOf(i), PAD.top + plotH + 10);
   }
   ctx.font = '10px Inter, system-ui, sans-serif';
-  ctx.fillText('Time ago (sprints)', PAD.left + plotW / 2, h - 8);
+  ctx.fillText('Sprints ago', PAD.left + plotW / 2, h - 8);
 }
 
 export function PressureChart({ history }: Props) {

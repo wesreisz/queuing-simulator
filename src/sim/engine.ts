@@ -94,14 +94,17 @@ export interface Metrics {
   history: PressureSample[];
 }
 
-export const getExponential = (rate: number) => -Math.log(1 - Math.random()) / rate;
+/** Random duration (in days) from an exponential distribution with the given mean. */
+export function randomDuration(meanDays: number): number {
+  return -meanDays * Math.log1p(-Math.random());
+}
 
 const newServer = (): Server => ({ item: null, remaining: 0, blockedRemaining: 0 });
 
 export function createSim(params: Params): SimData {
   return {
     time: 0,
-    nextArrival: params.arrivalRate > 0 ? getExponential(params.arrivalRate) : Infinity,
+    nextArrival: params.arrivalRate > 0 ? randomDuration(1 / params.arrivalRate) : Infinity,
     nextId: 1,
     queue1: [],
     queueReview: [],
@@ -157,11 +160,11 @@ function substep(data: SimData, params: Params, dt: number) {
   data.time += dt;
 
   if (params.arrivalRate > 0) {
-    if (!Number.isFinite(data.nextArrival)) data.nextArrival = getExponential(params.arrivalRate);
+    if (!Number.isFinite(data.nextArrival)) data.nextArrival = randomDuration(1 / params.arrivalRate);
     data.nextArrival -= dt;
     while (data.nextArrival <= 0) {
       spawn(data);
-      data.nextArrival += getExponential(params.arrivalRate);
+      data.nextArrival += randomDuration(1 / params.arrivalRate);
     }
   } else {
     data.nextArrival = Infinity;
@@ -181,7 +184,7 @@ function substep(data: SimData, params: Params, dt: number) {
         if (s.remaining <= 0) {
           if (Math.random() < params.blockingPct) {
             s.item.blocked = true;
-            s.blockedRemaining = getExponential(1 / BLOCK_MEAN_DAYS);
+            s.blockedRemaining = randomDuration(BLOCK_MEAN_DAYS);
           } else {
             enqueue(s.item, data.queueReview, 'queueReview', data.time);
             s.item = null;
@@ -193,7 +196,7 @@ function substep(data: SimData, params: Params, dt: number) {
       const item = data.queue1.shift()!;
       item.stage = 'dev';
       s.item = item;
-      s.remaining = getExponential(params.devRate);
+      s.remaining = randomDuration(1 / params.devRate);
     }
   }
 
@@ -216,7 +219,7 @@ function substep(data: SimData, params: Params, dt: number) {
       const item = data.queueReview.shift()!;
       item.stage = 'review';
       s.item = item;
-      s.remaining = getExponential(params.reviewRate);
+      s.remaining = randomDuration(1 / params.reviewRate);
     }
   }
 
@@ -245,7 +248,7 @@ function substep(data: SimData, params: Params, dt: number) {
       item.stage = 'qa';
       item.rework = false;
       s.item = item;
-      s.remaining = getExponential(params.qaRate);
+      s.remaining = randomDuration(1 / params.qaRate);
     }
   }
 

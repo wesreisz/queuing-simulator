@@ -42,7 +42,7 @@ export const SCENARIOS: Scenario[] = [
   {
     id: 'bottleneck',
     name: 'The QA Bottleneck',
-    summary: 'High Dev capacity vs. low QA capacity. The QA queue grows without bound.',
+    summary: 'Plenty of developers and reviewers, but too few testers. Work piles up in Ready for QA.',
     params: { ...NO_FRICTION, arrivalRate: 2.5, devServers: 3, reviewServers: 2, qaServers: 1, devRate: 1.2, reviewRate: 2.0, qaRate: 1.5 },
   },
   {

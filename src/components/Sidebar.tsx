@@ -138,11 +138,11 @@ export function Sidebar({
             label="Flow Efficiency"
             icon={<Timer size={12} className="tone-red" />}
             value={`${metrics.flowEfficiency.toFixed(1)}%`}
-            sub="Value Added / Lead Time"
+            sub="Time worked ÷ total time"
             tone={flowTone}
           />
           <Card
-            label="Max Utilization"
+            label="Peak Utilization"
             icon={<Activity size={12} className="tone-red" />}
             value={metrics.maxUtilisation >= 100 ? '> 100%' : `${metrics.maxUtilisation.toFixed(0)}%`}
             sub={`Bottleneck: Stage ${metrics.bottleneck}`}
@@ -152,10 +152,10 @@ export function Sidebar({
             label="Avg Lead Time"
             icon={<Clock size={12} />}
             value={Number.isFinite(leadDays) ? `${leadDays.toFixed(1)}d` : '∞'}
-            sub={`Theoretical M/M/c · actual ${metrics.actualLead.toFixed(1)}d`}
+            sub={`Model estimate · observed ${metrics.actualLead.toFixed(1)}d`}
           />
           <Card
-            label="Total Output"
+            label="Completed"
             icon={<Users size={12} />}
             value={metrics.done}
             sub={`${metrics.throughputPerSprint.toFixed(2)} items/sprint`}
@@ -178,7 +178,7 @@ export function Sidebar({
         </div>
       </Section>
 
-      <Section title="Incoming Flow" icon={<Waves size={12} />}>
+      <Section title="Demand" icon={<Waves size={12} />}>
         <Slider
           label="Arrival rate (λ)"
           value={params.arrivalRate}
@@ -199,7 +199,7 @@ export function Sidebar({
         />
       </Section>
 
-      <Section title="Team Capacity" icon={<Users size={12} />}>
+      <Section title="Capacity" icon={<Users size={12} />}>
         <Slider
           label="Code dev capacity (servers)"
           value={params.devServers}
@@ -263,7 +263,7 @@ export function Sidebar({
         <Slider label="QA WIP limit" value={params.qaWipLimit} min={1} max={40} step={1} onChange={(v) => onChange({ qaWipLimit: v })} />
       </Section>
 
-      <Section title="System Friction" icon={<ShieldAlert size={12} />}>
+      <Section title="Friction" icon={<ShieldAlert size={12} />}>
         <Slider
           label="Blocking % (code dev)"
           value={params.blockingPct}

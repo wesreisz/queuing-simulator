@@ -395,3 +395,13 @@
   flex: 1;
   min-height: 0;
 }
+
+.credit {
+  margin-top: 20px;
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.credit a {
+  color: var(--sapphire-blue);
+}
