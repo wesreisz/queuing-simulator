@@ -98,6 +98,7 @@ npm install
 npm run dev      # start the dev server
 npm run build    # type-check and build to dist/
 npm run lint     # run oxlint
+npm test         # run the unit tests
 ```
 
 ## Project structure

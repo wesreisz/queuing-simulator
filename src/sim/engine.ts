@@ -305,22 +305,29 @@ export function mmcTimeInSystem(lambda: number, mu: number, c: number): number {
   return wq + 1 / mu;
 }
 
+/** Utilization (rho) of Code Dev, Code Review and QA, in that order. */
+export function stageUtilisations(params: Params): [number, number, number] {
+  const lambdaQa = params.arrivalRate / Math.max(0.01, 1 - params.reworkPct);
+  const lambdaDev = lambdaQa / Math.max(0.01, 1 - params.reviewRejectPct);
+  const devCapacity = params.devServers * params.devRate;
+  const reviewCapacity = params.reviewServers * params.reviewRate;
+  // A stage can only receive what the stage before it is able to pass on.
+  const lambdaReview = Math.min(lambdaDev, devCapacity);
+  const lambdaQaReachable = Math.min(lambdaReview, reviewCapacity) * (1 - params.reviewRejectPct);
+  return [
+    lambdaDev / devCapacity,
+    lambdaReview / reviewCapacity,
+    Math.min(lambdaQa, lambdaQaReachable) / (params.qaServers * params.qaRate),
+  ];
+}
+
 export function computeMetrics(data: SimData, params: Params): Metrics {
   const lambdaQa = params.arrivalRate / Math.max(0.01, 1 - params.reworkPct);
   const lambdaDev = lambdaQa / Math.max(0.01, 1 - params.reviewRejectPct);
   const mu1 = params.devRate;
   const mu2 = params.reviewRate;
   const mu3 = params.qaRate;
-  const devCapacity = params.devServers * mu1;
-  const reviewCapacity = params.reviewServers * mu2;
-  // A stage can only receive what the stage before it is able to pass on.
-  const lambdaReview = Math.min(lambdaDev, devCapacity);
-  const lambdaQaReachable = Math.min(lambdaReview, reviewCapacity) * (1 - params.reviewRejectPct);
-  const rhos = [
-    lambdaDev / devCapacity,
-    lambdaReview / reviewCapacity,
-    Math.min(lambdaQa, lambdaQaReachable) / (params.qaServers * mu3),
-  ];
+  const rhos = stageUtilisations(params);
   const maxRho = Math.max(...rhos);
 
   const sprints = data.time / DAYS_PER_SPRINT;
