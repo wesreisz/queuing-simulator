@@ -52,7 +52,7 @@ export const SCENARIOS: Scenario[] = [
     id: 'agentic',
     name: 'Agentic Development',
     summary: 'Healthy team with code dev at maximum speed. Coding is much faster, but review and QA still set the pace.',
-    params: { ...NO_FRICTION, arrivalRate: 4.0, devServers: 3, reviewServers: 1, qaServers: 1, devRate: 4.0, reviewRate: 2.0, qaRate: 2.0 },
+    params: { ...NO_FRICTION, arrivalRate: 1.2, devServers: 3, reviewServers: 1, qaServers: 1, devRate: 4.0, reviewRate: 2.0, qaRate: 2.0 },
   },
   {
     id: 'review-bottleneck',
