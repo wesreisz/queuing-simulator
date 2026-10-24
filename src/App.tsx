@@ -41,8 +41,7 @@ export default function App() {
       <header className="hero">
         <h1>Queuing Theory Simulator</h1>
         <p>
-          What happens when developers work faster but nothing ships any sooner? An interactive simulation of bottlenecks and queuing
-          dynamics.
+          What happens to the system when we optimize some parts of software delivery and not the entire value chain?
         </p>
       </header>
 

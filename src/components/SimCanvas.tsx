@@ -16,12 +16,12 @@ const QUEUE_ALERT = QUEUE_COLS * QUEUE_MIN_ROWS;
 const DEV = { x: 395, y: 50, w: 100, h: 300, cx: 445 };
 const REVIEW = { x: 680, y: 50, w: 100, h: 300, cx: 730 };
 const QA = { x: 950, y: 50, w: 100, h: 300, cx: 1000 };
-const DONE = { cx: 1110, cy: CY, r: 26 };
+const DONE = { cx: 1120, cy: CY, r: 38 };
 
 const DEV_COLOR = '#0ea5e9';
 const REVIEW_COLOR = '#f59e0b';
 const QA_COLOR = '#10b981';
-const LABEL_FONT = '600 8px "JetBrains Mono", ui-monospace, monospace';
+const LABEL_FONT = '600 16px "JetBrains Mono", ui-monospace, monospace';
 
 interface Props {
   dataRef: RefObject<SimData>;
@@ -99,7 +99,7 @@ function stageColumn(ctx: CanvasRenderingContext2D, s: typeof DEV, color: string
   ctx.strokeStyle = `${color}99`;
   ctx.lineWidth = 1;
   ctx.stroke();
-  label(ctx, title, s.x + s.w / 2, s.y + 12, '#e2e8f0');
+  label(ctx, title, s.x + s.w / 2, s.y + s.h + 22, '#e2e8f0');
 }
 
 function drawServers(ctx: CanvasRenderingContext2D, servers: Server[], cx: number, color: string) {
@@ -119,14 +119,14 @@ function drawServers(ctx: CanvasRenderingContext2D, servers: Server[], cx: numbe
       ctx.strokeStyle = blocked ? '#ef4444' : '#e0f2fe';
       ctx.lineWidth = 1.5;
       ctx.stroke();
-      if (s.item.whale) label(ctx, 'W', cx + 16, y - 10, '#fbbf24');
+      if (s.item.whale) label(ctx, 'W', cx + 20, y - 14, '#fbbf24');
     } else {
       ctx.fillStyle = '#0f172a';
       ctx.fill();
       ctx.strokeStyle = `${color}cc`;
       ctx.lineWidth = 1.2;
       ctx.stroke();
-      ctx.font = '600 9px Inter, system-ui, sans-serif';
+      ctx.font = '600 18px Inter, system-ui, sans-serif';
       ctx.fillStyle = `${color}cc`;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
@@ -167,10 +167,10 @@ function drawGridQueue(
   const top = CY - h / 2;
   const backed = items.length > alertAt;
   box(ctx, x, top, QUEUE_W, h, 'rgba(15,23,42,0.85)', backed ? 'rgba(248,113,113,0.7)' : 'rgba(148,163,184,0.35)');
-  label(ctx, title, x + 5, top + h + 8, '#94a3b8', 'left');
-  label(ctx, `${items.length} waiting`, x + QUEUE_W - 5, top - 8, backed ? '#f87171' : '#94a3b8', 'right');
+  label(ctx, title, x + QUEUE_W / 2, top + h + 12, '#94a3b8');
+  label(ctx, `${items.length} waiting`, x + QUEUE_W / 2, top - 12, backed ? '#f87171' : '#94a3b8');
   if (items.length > visible) {
-    label(ctx, `+${items.length - visible}`, x + QUEUE_W - 5, top + h + 8, '#f87171', 'right');
+    label(ctx, `+${items.length - visible}`, x + QUEUE_W / 2, top + h + 30, '#f87171');
   }
   items.forEach((item, i) => {
     const slot = Math.min(i, visible - 1);
@@ -248,11 +248,11 @@ function render(ctx: CanvasRenderingContext2D, w: number, h: number, data: SimDa
   ctx.strokeStyle = '#a78bfa';
   ctx.lineWidth = 1.5;
   ctx.stroke();
-  label(ctx, 'DONE', DONE.cx, DONE.cy - 10, '#ddd6fe');
-  ctx.font = '700 11px Inter, system-ui, sans-serif';
+  label(ctx, 'DONE', DONE.cx, DONE.cy - 12, '#ddd6fe');
+  ctx.font = '700 22px Inter, system-ui, sans-serif';
   ctx.fillStyle = '#f5f3ff';
   ctx.textAlign = 'center';
-  ctx.fillText(String(data.completed), DONE.cx, DONE.cy + 6);
+  ctx.fillText(String(data.completed), DONE.cx, DONE.cy + 10);
 
   drawServers(ctx, data.dev, DEV.cx, DEV_COLOR);
   drawServers(ctx, data.review, REVIEW.cx, REVIEW_COLOR);
