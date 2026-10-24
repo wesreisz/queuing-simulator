@@ -32,7 +32,7 @@ const NO_FRICTION = { blockingPct: 0, reviewRejectPct: 0, reworkPct: 0, whaleMod
 export const SCENARIOS: Scenario[] = [
   {
     id: 'healthy',
-    name: 'Healthy Flow',
+    name: 'Healthy Traditional Flow',
     summary: 'Balanced stages with slack capacity. Queues stay short.',
     params: { ...NO_FRICTION, arrivalRate: 1.2, devServers: 3, reviewServers: 1, qaServers: 1, devRate: 0.7, reviewRate: 2.0, qaRate: 2.0 },
   },

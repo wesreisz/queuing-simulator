@@ -261,9 +261,9 @@ function render(ctx: CanvasRenderingContext2D, w: number, h: number, data: SimDa
   // Queues and items
   drawGridQueue(ctx, data.queue1, 216, 'BACKLOG', BACKLOG_ALERT, now, k, true);
   drawServerItems(ctx, data.dev, devYs, DEV.cx, now, k);
-  drawGridQueue(ctx, data.queueReview, 540, 'REVIEW QUEUE', QUEUE_ALERT, now, k, false);
+  drawGridQueue(ctx, data.queueReview, 540, 'PRs', QUEUE_ALERT, now, k, false);
   drawServerItems(ctx, data.review, reviewYs, REVIEW.cx, now, k);
-  drawGridQueue(ctx, data.queue2, 810, 'QA QUEUE', QUEUE_ALERT, now, k, false);
+  drawGridQueue(ctx, data.queue2, 810, 'Ready for QA', QUEUE_ALERT, now, k, false);
   drawServerItems(ctx, data.qa, qaYs, QA.cx, now, k);
   data.doneAnim = data.doneAnim.filter((item) => {
     moveToward(item, DONE.cx, DONE.cy, k);
