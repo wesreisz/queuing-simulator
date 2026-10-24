@@ -39,7 +39,7 @@ Utilization is how busy a stage is: arrivals divided by capacity. Anything at or
 | Scenario | Arrivals/day | Code Dev | Code Review | QA | Utilization (Dev / Review / QA) |
 |---|---|---|---|---|---|
 | Healthy Traditional Flow | 1.2 | 3 x 0.7 | 1 x 2.0 | 1 x 2.0 | 57% / 60% / 60% |
-| The Product Bottleneck | 3.0 | 3 x 0.7 | 1 x 2.0 | 1 x 2.0 | 143% / 150% / 150% |
+| The Product Bottleneck | 3.0 | 3 x 0.7 | 2 x 2.0 | 2 x 2.0 | 143% / 75% / 75% |
 | The QA Bottleneck | 2.5 | 3 x 1.2 | 2 x 2.0 | 1 x 1.5 | 69% / 63% / 167% |
 | Agentic Development | 1.2 | 3 x 4.0 | 1 x 2.0 | 1 x 2.0 | 10% / 60% / 60% |
 | Code Review Bottleneck | 5.0 | 2 x 4.0 | 3 x 1.5 | 2 x 4.0 | 63% / 111% / 63% |
@@ -52,7 +52,7 @@ The baseline, and what the app opens on. A traditional team where coding is the 
 
 ### The Product Bottleneck
 
-The same healthy team, but product asks for more than the system can finish. No stage can keep up, so the backlog grows without bound. Faster coding alone would not fix this; the downstream stages are also over capacity. This is the pressure that often motivates adopting agents in the first place.
+The same team with extra review and QA capacity, but product asks for more than developers can code. Review and QA have room to spare, while code dev can only finish about 2.1 items a day against 3 arriving, so the product backlog grows without bound. This is the pressure that often motivates adopting agents in the first place.
 
 ### The QA Bottleneck
 

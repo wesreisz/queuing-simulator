@@ -40,7 +40,7 @@ export const SCENARIOS: Scenario[] = [
     id: 'product-bottleneck',
     name: 'The Product Bottleneck',
     summary: 'Healthy team, but product pushes slightly more than the system finishes. The product backlog grows without bound.',
-    params: { ...NO_FRICTION, arrivalRate: 3.0, devServers: 3, reviewServers: 1, qaServers: 1, devRate: 0.7, reviewRate: 2.0, qaRate: 2.0 },
+    params: { ...NO_FRICTION, arrivalRate: 3.0, devServers: 3, reviewServers: 2, qaServers: 2, devRate: 0.7, reviewRate: 2.0, qaRate: 2.0 },
   },
   {
     id: 'bottleneck',
