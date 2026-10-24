@@ -57,7 +57,7 @@ export const SCENARIOS: Scenario[] = [
   {
     id: 'review-bottleneck',
     name: 'Code Review Bottleneck',
-    summary: 'Fast code dev and QA, but reviewers can’t keep up. The review queue grows without bound.',
-    params: { ...NO_FRICTION, arrivalRate: 5.0, devServers: 2, reviewServers: 3, qaServers: 2, devRate: 4.0, reviewRate: 1.5, qaRate: 4.0 },
+    summary: 'Agents code at full speed and demand rises to 4/day, but review can’t keep up. The PR queue grows without bound.',
+    params: { ...NO_FRICTION, arrivalRate: 4.0, devServers: 3, reviewServers: 1, qaServers: 1, devRate: 4.0, reviewRate: 2.0, qaRate: 2.0 },
   },
 ];

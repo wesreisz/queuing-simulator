@@ -42,7 +42,7 @@ Utilization is how busy a stage is: arrivals divided by capacity. Anything at or
 | The Product Bottleneck | 3.0 | 3 x 0.7 | 2 x 2.0 | 2 x 2.0 | 143% / 75% / 75% |
 | The QA Bottleneck | 2.5 | 3 x 1.2 | 2 x 2.0 | 1 x 1.5 | 69% / 63% / 167% |
 | Agentic Development | 1.2 | 3 x 4.0 | 1 x 2.0 | 1 x 2.0 | 10% / 60% / 60% |
-| Code Review Bottleneck | 5.0 | 2 x 4.0 | 3 x 1.5 | 2 x 4.0 | 63% / 111% / 63% |
+| Code Review Bottleneck | 4.0 | 3 x 4.0 | 1 x 2.0 | 1 x 2.0 | 33% / 200% / 200% |
 
 Stage columns are written as servers x service rate per day. All scenarios turn off blocking, rework, review rejection and whale tasks so the effect of capacity alone is visible. You can add that friction afterwards with the sliders.
 
@@ -64,7 +64,7 @@ The healthy team with code dev raised to the maximum service rate, as if agents 
 
 ### Code Review Bottleneck
 
-What agentic delivery tends to look like at scale. Code dev and QA are both fast (agents writing code and automated tests), and demand rises to 5 items a day. Human code review becomes the constraint at 111% utilization, and the PRs queue grows without bound while QA sits partly idle. The bottleneck has moved from writing code to reading it.
+Agentic Development with demand raised to 4 items a day to match the new coding speed. Code dev clears the backlog easily at about a third of its capacity, but review and QA are unchanged and can only handle 2 items a day. The PRs queue grows without bound and throughput stays capped at what review can get through. Agents produced more code, not more delivery: the bottleneck has moved from writing code to reading it.
 
 ## Reading the screen
 
