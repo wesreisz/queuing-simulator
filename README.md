@@ -41,7 +41,7 @@ Utilization is how busy a stage is: arrivals divided by capacity. Anything at or
 | Healthy Traditional Flow | 1.2 | 3 x 0.7 | 1 x 2.0 | 1 x 2.0 | 57% / 60% / 60% |
 | The Product Bottleneck | 3.0 | 3 x 0.7 | 2 x 2.0 | 2 x 2.0 | 143% / 75% / 75% |
 | The QA Bottleneck | 2.5 | 3 x 1.2 | 2 x 2.0 | 1 x 1.5 | 69% / 63% / 167% |
-| Agentic Development | 1.2 | 3 x 4.0 | 1 x 2.0 | 1 x 2.0 | 10% / 60% / 60% |
+| Agentic Development | 4.0 | 3 x 4.0 | 1 x 2.0 | 1 x 2.0 | 33% / 200% / 200% |
 | Code Review Bottleneck | 5.0 | 2 x 4.0 | 3 x 1.5 | 2 x 4.0 | 63% / 111% / 63% |
 
 Stage columns are written as servers x service rate per day. All scenarios turn off blocking, rework, review rejection and whale tasks so the effect of capacity alone is visible. You can add that friction afterwards with the sliders.
@@ -60,7 +60,7 @@ Plenty of development and review capacity, but a single QA server that can only 
 
 ### Agentic Development
 
-The healthy team with code dev raised to the maximum service rate, as if agents were writing the code. Lead time drops because each item spends far less time being coded. Throughput does not change: the team still finishes only what arrives, and review and QA are exactly as busy as before. The time saved in coding is real, but it is not more delivery.
+The healthy team with code dev raised to the maximum service rate, as if agents were writing the code, and demand raised to 4 items a day to match. Code dev clears the backlog easily at about a third of its capacity, but review and QA are unchanged and can only handle 2 items a day. The PRs queue grows without bound and throughput stays capped at what review can get through. Agents produced more code, not more delivery.
 
 ### Code Review Bottleneck
 
