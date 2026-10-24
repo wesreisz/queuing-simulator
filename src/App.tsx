@@ -17,7 +17,8 @@ const LEGEND = [
 
 export default function App() {
   const [params, setParams] = useState<Params>(DEFAULT_PARAMS);
-  const [activeScenario, setActiveScenario] = useState<string | null>('bottleneck');
+  const [activeScenario, setActiveScenario] = useState<string | null>('healthy');
+  const [resetOnScenario, setResetOnScenario] = useState(false);
   const [legendOpen, setLegendOpen] = useState(false);
   const { dataRef, metrics, running, setRunning, reset } = useSimulation(params);
 
@@ -32,7 +33,7 @@ export default function App() {
     const next = { ...params, ...scenario.params };
     setParams(next);
     setActiveScenario(id);
-    reset(next);
+    if (resetOnScenario) reset(next);
   };
 
   return (
@@ -46,7 +47,15 @@ export default function App() {
       </header>
 
       <div className="sim-panel">
-        <Sidebar params={params} metrics={metrics} activeScenario={activeScenario} onChange={handleChange} onScenario={handleScenario} />
+        <Sidebar
+          params={params}
+          metrics={metrics}
+          activeScenario={activeScenario}
+          resetOnScenario={resetOnScenario}
+          onChange={handleChange}
+          onScenario={handleScenario}
+          onResetOnScenarioChange={setResetOnScenario}
+        />
 
         <main className="stage-area">
           <div className="canvas-wrap">

@@ -20,8 +20,10 @@ interface SidebarProps {
   params: Params;
   metrics: Metrics;
   activeScenario: string | null;
+  resetOnScenario: boolean;
   onChange: (patch: Partial<Params>) => void;
   onScenario: (id: string) => void;
+  onResetOnScenarioChange: (value: boolean) => void;
 }
 
 function Section({
@@ -93,7 +95,15 @@ function Card({ label, icon, value, sub, tone }: { label: string; icon?: ReactNo
   );
 }
 
-export function Sidebar({ params, metrics, activeScenario, onChange, onScenario }: SidebarProps) {
+export function Sidebar({
+  params,
+  metrics,
+  activeScenario,
+  resetOnScenario,
+  onChange,
+  onScenario,
+  onResetOnScenarioChange,
+}: SidebarProps) {
   const flowTone = metrics.flowEfficiency < 15 ? 'tone-red' : metrics.flowEfficiency < 40 ? 'tone-amber' : 'tone-green';
   const utilTone = metrics.maxUtilisation >= 100 ? 'tone-red' : metrics.maxUtilisation >= 85 ? 'tone-amber' : 'tone-green';
   const leadDays = metrics.theoreticalLead;
@@ -150,6 +160,10 @@ export function Sidebar({ params, metrics, activeScenario, onChange, onScenario 
       </Section>
 
       <Section title="Scenarios" icon={<Layers size={12} />}>
+        <label className="toggle">
+          <input type="checkbox" checked={resetOnScenario} onChange={(e) => onResetOnScenarioChange(e.target.checked)} />
+          Reset simulation when switching
+        </label>
         <div className="scenario-list">
           {SCENARIOS.map((s) => (
             <button key={s.id} className={`scenario ${activeScenario === s.id ? 'active' : ''}`} onClick={() => onScenario(s.id)}>

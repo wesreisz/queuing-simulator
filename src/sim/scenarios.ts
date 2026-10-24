@@ -1,11 +1,11 @@
 import type { Params } from './engine';
 
 export const DEFAULT_PARAMS: Params = {
-  arrivalRate: 2.5,
+  arrivalRate: 1.2,
   devServers: 3,
   qaServers: 1,
-  devRate: 1.2,
-  qaRate: 1.5,
+  devRate: 0.7,
+  qaRate: 2.0,
   blockingPct: 0,
   reworkPct: 0,
   whaleMode: false,
@@ -30,7 +30,7 @@ export const SCENARIOS: Scenario[] = [
     id: 'healthy',
     name: 'Healthy Flow',
     summary: 'Balanced stages with slack capacity. Queues stay short.',
-    params: { ...NO_FRICTION, arrivalRate: 1.5, devServers: 2, qaServers: 2, devRate: 1.2, qaRate: 1.2 },
+    params: { ...NO_FRICTION, arrivalRate: 1.2, devServers: 3, qaServers: 1, devRate: 0.7, qaRate: 2.0 },
   },
   {
     id: 'bottleneck',
