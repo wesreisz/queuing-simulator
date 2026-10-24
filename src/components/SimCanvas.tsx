@@ -1,21 +1,25 @@
 import { useEffect, useRef, type RefObject } from 'react';
 import { itemState, STATE_COLORS, type Item, type Server, type SimData } from '../sim/engine';
 
-const VIEW_W = 1000;
+const VIEW_W = 1200;
 const VIEW_H = 400;
 const CY = 200;
 
 const BACKLOG_ALERT = 50;
-const QUEUE2_COLS = 10;
-const QUEUE2_MIN_ROWS = 3;
-const QUEUE2_MAX_ROWS = 20;
-const QUEUE2_ROW_GAP = 8;
+const QUEUE_W = 110;
+const QUEUE_COLS = 10;
+const QUEUE_MIN_ROWS = 3;
+const QUEUE_MAX_ROWS = 20;
+const QUEUE_ROW_GAP = 8;
+const QUEUE_ALERT = QUEUE_COLS * QUEUE_MIN_ROWS;
 
-const DEV = { x: 400, y: 50, w: 90, h: 300, cx: 445 };
-const QA = { x: 690, y: 50, w: 80, h: 300, cx: 730 };
-const DONE = { cx: 840, cy: CY, r: 26 };
+const DEV = { x: 395, y: 50, w: 100, h: 300, cx: 445 };
+const REVIEW = { x: 680, y: 50, w: 100, h: 300, cx: 730 };
+const QA = { x: 950, y: 50, w: 100, h: 300, cx: 1000 };
+const DONE = { cx: 1110, cy: CY, r: 26 };
 
 const DEV_COLOR = '#0ea5e9';
+const REVIEW_COLOR = '#f59e0b';
 const QA_COLOR = '#10b981';
 const LABEL_FONT = '600 8px "JetBrains Mono", ui-monospace, monospace';
 
@@ -147,6 +151,52 @@ function moveToward(item: Item, tx: number, ty: number, k: number) {
   item.y += (ty - item.y) * k;
 }
 
+function drawGridQueue(
+  ctx: CanvasRenderingContext2D,
+  items: Item[],
+  x: number,
+  title: string,
+  alertAt: number,
+  now: number,
+  k: number,
+  fillFromRight: boolean,
+) {
+  const visible = QUEUE_COLS * QUEUE_MAX_ROWS;
+  const rows = Math.min(QUEUE_MAX_ROWS, Math.max(QUEUE_MIN_ROWS, Math.ceil(items.length / QUEUE_COLS)));
+  const h = rows * QUEUE_ROW_GAP + 18;
+  const top = CY - h / 2;
+  const backed = items.length > alertAt;
+  box(ctx, x, top, QUEUE_W, h, 'rgba(15,23,42,0.85)', backed ? 'rgba(248,113,113,0.7)' : 'rgba(148,163,184,0.35)');
+  label(ctx, title, x + 5, top + h + 8, '#94a3b8', 'left');
+  label(ctx, `${items.length} waiting`, x + QUEUE_W - 5, top - 8, backed ? '#f87171' : '#94a3b8', 'right');
+  if (items.length > visible) {
+    label(ctx, `+${items.length - visible}`, x + QUEUE_W - 5, top + h + 8, '#f87171', 'right');
+  }
+  items.forEach((item, i) => {
+    const slot = Math.min(i, visible - 1);
+    const col = slot % QUEUE_COLS;
+    const row = Math.floor(slot / QUEUE_COLS);
+    const ix = fillFromRight ? x + QUEUE_W - 10 - col * 10 : x + 10 + col * 10;
+    moveToward(item, ix, top + 9 + QUEUE_ROW_GAP / 2 + row * QUEUE_ROW_GAP, k);
+    if (i < visible) drawItem(ctx, item, now, 3);
+  });
+}
+
+function fanAround(ctx: CanvasRenderingContext2D, ys: number[], inX: number, cx: number, outX: number) {
+  ys.forEach((y) => {
+    dashedLine(ctx, inX, CY, cx - 11, y);
+    dashedLine(ctx, cx + 11, y, outX, CY);
+  });
+}
+
+function drawServerItems(ctx: CanvasRenderingContext2D, servers: Server[], ys: number[], cx: number, now: number, k: number) {
+  servers.forEach((s, i) => {
+    if (!s.item) return;
+    moveToward(s.item, cx, ys[i], k);
+    drawItem(ctx, s.item, now, 3.5);
+  });
+}
+
 function render(ctx: CanvasRenderingContext2D, w: number, h: number, data: SimData, dtReal: number) {
   ctx.clearRect(0, 0, w, h);
   drawGrid(ctx, w, h);
@@ -159,54 +209,32 @@ function render(ctx: CanvasRenderingContext2D, w: number, h: number, data: SimDa
   const now = data.time;
   const k = 1 - Math.exp(-dtReal * 10);
   const devYs = serverYs(data.dev.length);
+  const reviewYs = serverYs(data.review.length);
   const qaYs = serverYs(data.qa.length);
 
-  stageColumn(ctx, DEV, DEV_COLOR, 'STAGE 1: DEV');
-  stageColumn(ctx, QA, QA_COLOR, 'STAGE 2: QA');
+  stageColumn(ctx, DEV, DEV_COLOR, 'STAGE 1: CODE DEV');
+  stageColumn(ctx, REVIEW, REVIEW_COLOR, 'STAGE 2: CODE REVIEW');
+  stageColumn(ctx, QA, QA_COLOR, 'STAGE 3: QA');
 
-  // Backlog
-  const q1Visible = QUEUE2_COLS * QUEUE2_MAX_ROWS;
-  const q1Rows = Math.min(QUEUE2_MAX_ROWS, Math.max(QUEUE2_MIN_ROWS, Math.ceil(data.queue1.length / QUEUE2_COLS)));
-  const q1H = q1Rows * QUEUE2_ROW_GAP + 18;
-  const q1Top = CY - q1H / 2;
-  const q1Backed = data.queue1.length > BACKLOG_ALERT;
-  box(ctx, 216, q1Top, 110, q1H, 'rgba(15,23,42,0.85)', q1Backed ? 'rgba(248,113,113,0.7)' : 'rgba(148,163,184,0.35)');
-  label(ctx, 'BACKLOG', 221, q1Top + q1H + 8, '#94a3b8', 'left');
-  label(ctx, `${data.queue1.length} waiting`, 321, q1Top - 8, q1Backed ? '#f87171' : '#94a3b8', 'right');
-  if (data.queue1.length > q1Visible) {
-    label(ctx, `+${data.queue1.length - q1Visible}`, 321, q1Top + q1H + 8, '#f87171', 'right');
-  }
-
-  // Fan-in / fan-out lines around Dev
+  // Backlog -> Code Dev -> Review Queue
   dashedLine(ctx, 326, CY, 370, CY);
-  devYs.forEach((y) => {
-    dashedLine(ctx, 370, CY, DEV.cx - 11, y);
-    dashedLine(ctx, DEV.cx + 11, y, 520, CY);
-  });
+  fanAround(ctx, devYs, 370, DEV.cx, 520);
   node(ctx, 370, CY);
   dashedLine(ctx, 520, CY, 540, CY);
 
-  // Queue 2
-  const q2Visible = QUEUE2_COLS * QUEUE2_MAX_ROWS;
-  const q2Rows = Math.min(QUEUE2_MAX_ROWS, Math.max(QUEUE2_MIN_ROWS, Math.ceil(data.queue2.length / QUEUE2_COLS)));
-  const q2H = q2Rows * QUEUE2_ROW_GAP + 18;
-  const q2Top = CY - q2H / 2;
-  const q2Backed = data.queue2.length > QUEUE2_COLS * QUEUE2_MIN_ROWS;
-  box(ctx, 540, q2Top, 110, q2H, 'rgba(15,23,42,0.85)', q2Backed ? 'rgba(248,113,113,0.7)' : 'rgba(148,163,184,0.35)');
-  label(ctx, 'QUEUE 2', 545, q2Top + q2H + 8, '#94a3b8', 'left');
-  label(ctx, `${data.queue2.length} waiting`, 645, q2Top - 8, q2Backed ? '#f87171' : '#94a3b8', 'right');
-  if (data.queue2.length > q2Visible) {
-    label(ctx, `+${data.queue2.length - q2Visible}`, 645, q2Top + q2H + 8, '#f87171', 'right');
-  }
-
-  dashedLine(ctx, 650, CY, 690, CY);
+  // Review Queue -> Code Review -> QA Queue
+  dashedLine(ctx, 650, CY, 672, CY);
+  fanAround(ctx, reviewYs, 672, REVIEW.cx, 790);
   node(ctx, 672, CY);
-  qaYs.forEach((y) => {
-    dashedLine(ctx, 690, CY, QA.cx - 11, y);
-    dashedLine(ctx, QA.cx + 11, y, 790, CY);
-  });
-  dashedLine(ctx, 770, CY, DONE.cx - DONE.r, CY);
+  dashedLine(ctx, 790, CY, 810, CY);
   node(ctx, 790, CY);
+
+  // QA Queue -> QA -> Done
+  dashedLine(ctx, 920, CY, 942, CY);
+  fanAround(ctx, qaYs, 942, QA.cx, 1060);
+  node(ctx, 942, CY);
+  dashedLine(ctx, 1060, CY, DONE.cx - DONE.r, CY);
+  node(ctx, 1060, CY);
 
   // Done
   ctx.beginPath();
@@ -227,33 +255,16 @@ function render(ctx: CanvasRenderingContext2D, w: number, h: number, data: SimDa
   ctx.fillText(String(data.completed), DONE.cx, DONE.cy + 6);
 
   drawServers(ctx, data.dev, DEV.cx, DEV_COLOR);
+  drawServers(ctx, data.review, REVIEW.cx, REVIEW_COLOR);
   drawServers(ctx, data.qa, QA.cx, QA_COLOR);
 
-  // Items
-  data.queue1.forEach((item, i) => {
-    const slot = Math.min(i, q1Visible - 1);
-    const col = slot % QUEUE2_COLS;
-    const row = Math.floor(slot / QUEUE2_COLS);
-    moveToward(item, 316 - col * 10, q1Top + 9 + QUEUE2_ROW_GAP / 2 + row * QUEUE2_ROW_GAP, k);
-    if (i < q1Visible) drawItem(ctx, item, now, 3);
-  });
-  data.dev.forEach((s, i) => {
-    if (!s.item) return;
-    moveToward(s.item, DEV.cx, devYs[i], k);
-    drawItem(ctx, s.item, now, 3.5);
-  });
-  data.queue2.forEach((item, i) => {
-    const slot = Math.min(i, q2Visible - 1);
-    const col = slot % QUEUE2_COLS;
-    const row = Math.floor(slot / QUEUE2_COLS);
-    moveToward(item, 550 + col * 10, q2Top + 9 + QUEUE2_ROW_GAP / 2 + row * QUEUE2_ROW_GAP, k);
-    if (i < q2Visible) drawItem(ctx, item, now, 3);
-  });
-  data.qa.forEach((s, i) => {
-    if (!s.item) return;
-    moveToward(s.item, QA.cx, qaYs[i], k);
-    drawItem(ctx, s.item, now, 3.5);
-  });
+  // Queues and items
+  drawGridQueue(ctx, data.queue1, 216, 'BACKLOG', BACKLOG_ALERT, now, k, true);
+  drawServerItems(ctx, data.dev, devYs, DEV.cx, now, k);
+  drawGridQueue(ctx, data.queueReview, 540, 'REVIEW QUEUE', QUEUE_ALERT, now, k, false);
+  drawServerItems(ctx, data.review, reviewYs, REVIEW.cx, now, k);
+  drawGridQueue(ctx, data.queue2, 810, 'QA QUEUE', QUEUE_ALERT, now, k, false);
+  drawServerItems(ctx, data.qa, qaYs, QA.cx, now, k);
   data.doneAnim = data.doneAnim.filter((item) => {
     moveToward(item, DONE.cx, DONE.cy, k);
     if (Math.hypot(item.x - DONE.cx, item.y - DONE.cy) < DONE.r - 6) return false;

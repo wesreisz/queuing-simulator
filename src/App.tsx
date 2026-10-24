@@ -105,10 +105,13 @@ export default function App() {
               <span className="chart-title">Queue Pressure by Stage</span>
               <span className="chart-keys">
                 <span>
-                  <i style={{ background: '#0ea5e9' }} /> Stage 1 (Dev)
+                  <i style={{ background: '#0ea5e9' }} /> Stage 1 (Code Dev)
                 </span>
                 <span>
-                  <i style={{ background: '#10b981' }} /> Stage 2 (QA)
+                  <i style={{ background: '#f59e0b' }} /> Stage 2 (Code Review)
+                </span>
+                <span>
+                  <i style={{ background: '#10b981' }} /> Stage 3 (QA)
                 </span>
               </span>
             </div>

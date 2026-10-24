@@ -7,7 +7,7 @@ const MAX_SUBSTEP_DAYS = 0.05;
 const WAITING_THRESHOLD_DAYS = 1;
 const MAX_DONE_ANIMATIONS = 200;
 
-export type Stage = 'queue1' | 'dev' | 'queue2' | 'qa' | 'done';
+export type Stage = 'queue1' | 'dev' | 'queueReview' | 'review' | 'queue2' | 'qa' | 'done';
 export type ItemState = 'flowing' | 'waiting' | 'blocked' | 'rework';
 
 export const STATE_COLORS: Record<ItemState, string> = {
@@ -40,15 +40,19 @@ export interface Server {
 export interface Params {
   arrivalRate: number;
   devServers: number;
+  reviewServers: number;
   qaServers: number;
   devRate: number;
+  reviewRate: number;
   qaRate: number;
   blockingPct: number;
+  reviewRejectPct: number;
   reworkPct: number;
   whaleMode: boolean;
   whaleProb: number;
   whaleMultiplier: number;
   devWipLimit: number;
+  reviewWipLimit: number;
   qaWipLimit: number;
   speed: number;
 }
@@ -56,6 +60,7 @@ export interface Params {
 export interface PressureSample {
   s1: number;
   s2: number;
+  s3: number;
 }
 
 export interface SimData {
@@ -63,8 +68,10 @@ export interface SimData {
   nextArrival: number;
   nextId: number;
   queue1: Item[];
+  queueReview: Item[];
   queue2: Item[];
   dev: Server[];
+  review: Server[];
   qa: Server[];
   doneAnim: Item[];
   completed: number;
@@ -78,11 +85,12 @@ export interface Metrics {
   time: number;
   done: number;
   devWip: number;
+  reviewWip: number;
   qaWip: number;
   backlog: number;
   flowEfficiency: number;
   maxUtilisation: number;
-  bottleneck: 1 | 2;
+  bottleneck: 1 | 2 | 3;
   theoreticalLead: number;
   actualLead: number;
   throughputPerSprint: number;
@@ -99,8 +107,10 @@ export function createSim(params: Params): SimData {
     nextArrival: params.arrivalRate > 0 ? getExponential(params.arrivalRate) : Infinity,
     nextId: 1,
     queue1: [],
+    queueReview: [],
     queue2: [],
     dev: Array.from({ length: params.devServers }, newServer),
+    review: Array.from({ length: params.reviewServers }, newServer),
     qa: Array.from({ length: params.qaServers }, newServer),
     doneAnim: [],
     completed: 0,
@@ -168,7 +178,7 @@ function substep(data: SimData, params: Params, dt: number) {
       if (s.item.blocked) {
         s.blockedRemaining -= dt;
         if (s.blockedRemaining <= 0) {
-          enqueue(s.item, data.queue2, 'queue2', data.time);
+          enqueue(s.item, data.queueReview, 'queueReview', data.time);
           s.item = null;
         }
       } else {
@@ -179,7 +189,7 @@ function substep(data: SimData, params: Params, dt: number) {
             s.item.blocked = true;
             s.blockedRemaining = getExponential(1 / BLOCK_MEAN_DAYS);
           } else {
-            enqueue(s.item, data.queue2, 'queue2', data.time);
+            enqueue(s.item, data.queueReview, 'queueReview', data.time);
             s.item = null;
           }
         }
@@ -190,6 +200,29 @@ function substep(data: SimData, params: Params, dt: number) {
       item.stage = 'dev';
       s.item = item;
       s.remaining = getExponential(params.devRate) * item.size;
+    }
+  }
+
+  for (const s of data.review) {
+    if (s.item) {
+      s.remaining -= dt;
+      s.item.valueAdded += dt;
+      if (s.remaining <= 0) {
+        const item = s.item;
+        s.item = null;
+        if (Math.random() < params.reviewRejectPct) {
+          item.rework = true;
+          enqueue(item, data.queue1, 'queue1', data.time);
+        } else {
+          enqueue(item, data.queue2, 'queue2', data.time);
+        }
+      }
+    }
+    if (!s.item && data.queueReview.length > 0) {
+      const item = data.queueReview.shift()!;
+      item.stage = 'review';
+      s.item = item;
+      s.remaining = getExponential(params.reviewRate) * item.size;
     }
   }
 
@@ -226,7 +259,8 @@ function substep(data: SimData, params: Params, dt: number) {
     data.lastSample = data.time;
     data.history.push({
       s1: (devWip(data) / Math.max(1, params.devWipLimit)) * 100,
-      s2: (qaWip(data) / Math.max(1, params.qaWipLimit)) * 100,
+      s2: (reviewWip(data) / Math.max(1, params.reviewWipLimit)) * 100,
+      s3: (qaWip(data) / Math.max(1, params.qaWipLimit)) * 100,
     });
     if (data.history.length > HISTORY_LENGTH) data.history.shift();
   }
@@ -234,6 +268,7 @@ function substep(data: SimData, params: Params, dt: number) {
 
 export function step(data: SimData, params: Params, dt: number) {
   syncServers(data.dev, params.devServers, data.queue1, 'queue1', data.time);
+  syncServers(data.review, params.reviewServers, data.queueReview, 'queueReview', data.time);
   syncServers(data.qa, params.qaServers, data.queue2, 'queue2', data.time);
   let remaining = dt;
   while (remaining > 0) {
@@ -244,12 +279,13 @@ export function step(data: SimData, params: Params, dt: number) {
 }
 
 export const devWip = (data: SimData) => data.queue1.length + data.dev.filter((s) => s.item).length;
+export const reviewWip = (data: SimData) => data.queueReview.length + data.review.filter((s) => s.item).length;
 export const qaWip = (data: SimData) => data.queue2.length + data.qa.filter((s) => s.item).length;
 
 export function itemState(item: Item, now: number): ItemState {
   if (item.blocked) return 'blocked';
   if (item.rework && item.stage === 'queue1') return 'rework';
-  if ((item.stage === 'queue1' || item.stage === 'queue2') && now - item.enqueuedAt > WAITING_THRESHOLD_DAYS) {
+  if ((item.stage === 'queue1' || item.stage === 'queueReview' || item.stage === 'queue2') && now - item.enqueuedAt > WAITING_THRESHOLD_DAYS) {
     return 'waiting';
   }
   return 'flowing';
@@ -277,11 +313,17 @@ export function mmcTimeInSystem(lambda: number, mu: number, c: number): number {
 
 export function computeMetrics(data: SimData, params: Params): Metrics {
   const meanSize = params.whaleMode ? 1 + params.whaleProb * (params.whaleMultiplier - 1) : 1;
-  const lambdaEff = params.arrivalRate / Math.max(0.01, 1 - params.reworkPct);
+  const lambdaQa = params.arrivalRate / Math.max(0.01, 1 - params.reworkPct);
+  const lambdaDev = lambdaQa / Math.max(0.01, 1 - params.reviewRejectPct);
   const mu1 = params.devRate / meanSize;
-  const mu2 = params.qaRate / meanSize;
-  const rho1 = lambdaEff / (params.devServers * mu1);
-  const rho2 = lambdaEff / (params.qaServers * mu2);
+  const mu2 = params.reviewRate / meanSize;
+  const mu3 = params.qaRate / meanSize;
+  const rhos = [
+    lambdaDev / (params.devServers * mu1),
+    lambdaDev / (params.reviewServers * mu2),
+    lambdaQa / (params.qaServers * mu3),
+  ];
+  const maxRho = Math.max(...rhos);
 
   const sprints = data.time / DAYS_PER_SPRINT;
   const throughputPerSprint = sprints > 0 ? data.completed / sprints : 0;
@@ -289,12 +331,16 @@ export function computeMetrics(data: SimData, params: Params): Metrics {
     time: data.time,
     done: data.completed,
     devWip: devWip(data),
+    reviewWip: reviewWip(data),
     qaWip: qaWip(data),
     backlog: data.queue1.length,
     flowEfficiency: data.totalLead > 0 ? (data.totalValueAdded / data.totalLead) * 100 : 0,
-    maxUtilisation: Math.max(rho1, rho2) * 100,
-    bottleneck: rho2 >= rho1 ? 2 : 1,
-    theoreticalLead: mmcTimeInSystem(lambdaEff, mu1, params.devServers) + mmcTimeInSystem(lambdaEff, mu2, params.qaServers),
+    maxUtilisation: maxRho * 100,
+    bottleneck: (rhos.lastIndexOf(maxRho) + 1) as 1 | 2 | 3,
+    theoreticalLead:
+      mmcTimeInSystem(lambdaDev, mu1, params.devServers) +
+      mmcTimeInSystem(lambdaDev, mu2, params.reviewServers) +
+      mmcTimeInSystem(lambdaQa, mu3, params.qaServers),
     actualLead: data.completed > 0 ? data.totalLead / data.completed : 0,
     throughputPerSprint,
     history: data.history.slice(),

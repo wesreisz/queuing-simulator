@@ -123,6 +123,12 @@ export function Sidebar({
             </div>
           </div>
           <div className="stat">
+            <div className="stat-label">Review WIP</div>
+            <div className={`stat-value ${metrics.reviewWip > params.reviewWipLimit ? 'tone-red' : 'tone-amber'}`}>
+              {metrics.reviewWip} <span className="stat-limit">/ {params.reviewWipLimit}</span>
+            </div>
+          </div>
+          <div className="stat">
             <div className="stat-label">QA WIP</div>
             <div className={`stat-value ${metrics.qaWip > params.qaWipLimit ? 'tone-red' : 'tone-green'}`}>
               {metrics.qaWip} <span className="stat-limit">/ {params.qaWipLimit}</span>
@@ -197,7 +203,7 @@ export function Sidebar({
 
       <Section title="Team Capacity" icon={<Users size={12} />}>
         <Slider
-          label="Dev capacity (servers)"
+          label="Code dev capacity (servers)"
           value={params.devServers}
           min={1}
           max={8}
@@ -205,13 +211,30 @@ export function Sidebar({
           onChange={(v) => onChange({ devServers: v })}
         />
         <Slider
-          label="Dev service rate (μ)"
+          label="Code dev service rate (μ)"
           value={params.devRate}
           min={0.2}
           max={4}
           step={0.1}
           format={(v) => `${v.toFixed(1)}/day`}
           onChange={(v) => onChange({ devRate: v })}
+        />
+        <Slider
+          label="Review capacity (servers)"
+          value={params.reviewServers}
+          min={1}
+          max={8}
+          step={1}
+          onChange={(v) => onChange({ reviewServers: v })}
+        />
+        <Slider
+          label="Review service rate (μ)"
+          value={params.reviewRate}
+          min={0.2}
+          max={4}
+          step={0.1}
+          format={(v) => `${v.toFixed(1)}/day`}
+          onChange={(v) => onChange({ reviewRate: v })}
         />
         <Slider
           label="QA capacity (servers)"
@@ -230,13 +253,21 @@ export function Sidebar({
           format={(v) => `${v.toFixed(1)}/day`}
           onChange={(v) => onChange({ qaRate: v })}
         />
-        <Slider label="Dev WIP limit" value={params.devWipLimit} min={1} max={40} step={1} onChange={(v) => onChange({ devWipLimit: v })} />
+        <Slider label="Code dev WIP limit" value={params.devWipLimit} min={1} max={40} step={1} onChange={(v) => onChange({ devWipLimit: v })} />
+        <Slider
+          label="Review WIP limit"
+          value={params.reviewWipLimit}
+          min={1}
+          max={40}
+          step={1}
+          onChange={(v) => onChange({ reviewWipLimit: v })}
+        />
         <Slider label="QA WIP limit" value={params.qaWipLimit} min={1} max={40} step={1} onChange={(v) => onChange({ qaWipLimit: v })} />
       </Section>
 
       <Section title="System Friction" icon={<ShieldAlert size={12} />}>
         <Slider
-          label="Blocking %"
+          label="Blocking % (code dev)"
           value={params.blockingPct}
           min={0}
           max={0.8}
@@ -245,7 +276,16 @@ export function Sidebar({
           onChange={(v) => onChange({ blockingPct: v })}
         />
         <Slider
-          label="Rework %"
+          label="Review rejection %"
+          value={params.reviewRejectPct}
+          min={0}
+          max={0.8}
+          step={0.01}
+          format={pct}
+          onChange={(v) => onChange({ reviewRejectPct: v })}
+        />
+        <Slider
+          label="QA rework %"
           value={params.reworkPct}
           min={0}
           max={0.8}

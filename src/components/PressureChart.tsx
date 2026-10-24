@@ -75,7 +75,8 @@ function drawChart(canvas: HTMLCanvasElement | null, w: number, h: number, data:
     ctx.fill();
     ctx.lineWidth = 1;
   };
-  series('s2', '#10b981');
+  series('s3', '#10b981');
+  series('s2', '#f59e0b');
   series('s1', '#0ea5e9');
 
   ctx.fillStyle = '#64748b';
