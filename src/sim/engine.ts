@@ -1,3 +1,5 @@
+import { BRAND } from '../theme';
+
 export const DAYS_PER_SPRINT = 10;
 export const HISTORY_SAMPLE_DAYS = 1;
 export const HISTORY_LENGTH = 60;
@@ -11,10 +13,10 @@ export type Stage = 'queue1' | 'dev' | 'queueReview' | 'review' | 'queue2' | 'qa
 export type ItemState = 'flowing' | 'waiting' | 'blocked' | 'rework';
 
 export const STATE_COLORS: Record<ItemState, string> = {
-  flowing: '#22c55e',
-  waiting: '#eab308',
-  blocked: '#ef4444',
-  rework: '#3b82f6',
+  flowing: BRAND.jadeGreen,
+  waiting: BRAND.turmericYellow,
+  blocked: BRAND.flamingoPink,
+  rework: BRAND.sapphireBlue,
 };
 
 export interface Item {

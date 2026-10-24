@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { DAYS_PER_SPRINT, HISTORY_LENGTH, HISTORY_SAMPLE_DAYS, type PressureSample } from '../sim/engine';
+import { BRAND, STAGE_COLORS, UI } from '../theme';
 
 const MAX_PCT = 200;
 const OPTIMAL_PCT = 80;
@@ -23,12 +24,12 @@ function drawChart(canvas: HTMLCanvasElement | null, w: number, h: number, data:
   ctx.textBaseline = 'middle';
   for (let pct = 0; pct <= MAX_PCT; pct += 50) {
     const y = Math.round(yOf(pct)) + 0.5;
-    ctx.strokeStyle = 'rgba(148,163,184,0.1)';
+    ctx.strokeStyle = 'rgba(237,241,243,0.1)';
     ctx.beginPath();
     ctx.moveTo(PAD.left, y);
     ctx.lineTo(PAD.left + plotW, y);
     ctx.stroke();
-    ctx.fillStyle = '#64748b';
+    ctx.fillStyle = UI.muted;
     ctx.textAlign = 'right';
     ctx.fillText(`${pct}%`, PAD.left - 6, y);
   }
@@ -48,8 +49,8 @@ function drawChart(canvas: HTMLCanvasElement | null, w: number, h: number, data:
     ctx.font = '600 9px Inter, system-ui, sans-serif';
     ctx.fillText(text, PAD.left + plotW + 4, y);
   };
-  refLine(100, '#f87171', 'Max');
-  refLine(OPTIMAL_PCT, '#4ade80', 'Optimal');
+  refLine(100, BRAND.flamingoPink, 'Max');
+  refLine(OPTIMAL_PCT, BRAND.mistGrey, 'Optimal');
 
   // Newest sample is pinned to the right edge.
   const offset = HISTORY_LENGTH - data.length;
@@ -75,11 +76,11 @@ function drawChart(canvas: HTMLCanvasElement | null, w: number, h: number, data:
     ctx.fill();
     ctx.lineWidth = 1;
   };
-  series('s3', '#10b981');
-  series('s2', '#f59e0b');
-  series('s1', '#0ea5e9');
+  series('s3', STAGE_COLORS.qa);
+  series('s2', STAGE_COLORS.review);
+  series('s1', STAGE_COLORS.dev);
 
-  ctx.fillStyle = '#64748b';
+  ctx.fillStyle = UI.muted;
   ctx.font = '9px Inter, system-ui, sans-serif';
   ctx.textAlign = 'center';
   for (let i = 0; i < HISTORY_LENGTH; i += 2) {

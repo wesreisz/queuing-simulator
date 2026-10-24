@@ -6,6 +6,7 @@ import { useSimulation } from './sim/useSimulation';
 import { SimCanvas } from './components/SimCanvas';
 import { PressureChart } from './components/PressureChart';
 import { Sidebar } from './components/Sidebar';
+import { STAGE_COLORS } from './theme';
 import './App.css';
 
 const LEGEND = [
@@ -104,13 +105,13 @@ export default function App() {
               <span className="chart-title">Queue Pressure by Stage</span>
               <span className="chart-keys">
                 <span>
-                  <i style={{ background: '#0ea5e9' }} /> Stage 1 (Code Dev)
+                  <i style={{ background: STAGE_COLORS.dev }} /> Stage 1 (Code Dev)
                 </span>
                 <span>
-                  <i style={{ background: '#f59e0b' }} /> Stage 2 (Code Review)
+                  <i style={{ background: STAGE_COLORS.review }} /> Stage 2 (Code Review)
                 </span>
                 <span>
-                  <i style={{ background: '#10b981' }} /> Stage 3 (QA)
+                  <i style={{ background: STAGE_COLORS.qa }} /> Stage 3 (QA)
                 </span>
               </span>
             </div>

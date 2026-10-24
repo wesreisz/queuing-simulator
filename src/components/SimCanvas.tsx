@@ -1,5 +1,6 @@
 import { useEffect, useRef, type RefObject } from 'react';
 import { itemState, STATE_COLORS, type Item, type Server, type SimData } from '../sim/engine';
+import { BRAND, STAGE_COLORS, UI } from '../theme';
 
 const VIEW_W = 1200;
 const VIEW_H = 400;
@@ -18,9 +19,9 @@ const REVIEW = { x: 680, y: 50, w: 100, h: 300, cx: 730 };
 const QA = { x: 950, y: 50, w: 100, h: 300, cx: 1000 };
 const DONE = { cx: 1120, cy: CY, r: 38 };
 
-const DEV_COLOR = '#0ea5e9';
-const REVIEW_COLOR = '#f59e0b';
-const QA_COLOR = '#10b981';
+const DEV_COLOR = STAGE_COLORS.dev;
+const REVIEW_COLOR = STAGE_COLORS.review;
+const QA_COLOR = STAGE_COLORS.qa;
 const LABEL_FONT = '600 16px "JetBrains Mono", ui-monospace, monospace';
 
 interface Props {
@@ -33,7 +34,7 @@ function serverYs(count: number): number[] {
 }
 
 function drawGrid(ctx: CanvasRenderingContext2D, w: number, h: number) {
-  ctx.strokeStyle = 'rgba(148, 163, 184, 0.06)';
+  ctx.strokeStyle = 'rgba(237, 241, 243, 0.05)';
   ctx.lineWidth = 1;
   const step = 32;
   ctx.beginPath();
@@ -69,7 +70,7 @@ function box(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: 
 function dashedLine(ctx: CanvasRenderingContext2D, x1: number, y1: number, x2: number, y2: number) {
   ctx.save();
   ctx.setLineDash([3, 4]);
-  ctx.strokeStyle = 'rgba(148, 163, 184, 0.35)';
+  ctx.strokeStyle = 'rgba(237, 241, 243, 0.35)';
   ctx.lineWidth = 1;
   ctx.beginPath();
   ctx.moveTo(x1, y1);
@@ -81,9 +82,9 @@ function dashedLine(ctx: CanvasRenderingContext2D, x1: number, y1: number, x2: n
 function node(ctx: CanvasRenderingContext2D, x: number, y: number) {
   ctx.beginPath();
   ctx.arc(x, y, 3.5, 0, Math.PI * 2);
-  ctx.fillStyle = '#1e293b';
+  ctx.fillStyle = UI.panelDeep;
   ctx.fill();
-  ctx.strokeStyle = '#60a5fa';
+  ctx.strokeStyle = BRAND.sapphireBlue;
   ctx.lineWidth = 1.2;
   ctx.stroke();
 }
@@ -99,7 +100,7 @@ function stageColumn(ctx: CanvasRenderingContext2D, s: typeof DEV, color: string
   ctx.strokeStyle = `${color}99`;
   ctx.lineWidth = 1;
   ctx.stroke();
-  label(ctx, title, s.x + s.w / 2, s.y + s.h + 22, '#e2e8f0');
+  label(ctx, title, s.x + s.w / 2, s.y + s.h + 22, UI.text);
 }
 
 function drawServers(ctx: CanvasRenderingContext2D, servers: Server[], cx: number, color: string) {
@@ -111,17 +112,17 @@ function drawServers(ctx: CanvasRenderingContext2D, servers: Server[], cx: numbe
     if (s.item) {
       const blocked = s.item.blocked;
       ctx.save();
-      ctx.shadowColor = blocked ? '#ef4444' : color;
+      ctx.shadowColor = blocked ? BRAND.flamingoPink : color;
       ctx.shadowBlur = 14;
-      ctx.fillStyle = blocked ? '#7f1d1d' : color;
+      ctx.fillStyle = blocked ? '#6B2533' : color;
       ctx.fill();
       ctx.restore();
-      ctx.strokeStyle = blocked ? '#ef4444' : '#e0f2fe';
+      ctx.strokeStyle = blocked ? BRAND.flamingoPink : BRAND.talcWhite;
       ctx.lineWidth = 1.5;
       ctx.stroke();
-      if (s.item.whale) label(ctx, 'W', cx + 20, y - 14, '#fbbf24');
+      if (s.item.whale) label(ctx, 'W', cx + 20, y - 14, BRAND.turmericYellow);
     } else {
-      ctx.fillStyle = '#0f172a';
+      ctx.fillStyle = UI.panelDeep;
       ctx.fill();
       ctx.strokeStyle = `${color}cc`;
       ctx.lineWidth = 1.2;
@@ -166,11 +167,11 @@ function drawGridQueue(
   const h = rows * QUEUE_ROW_GAP + 18;
   const top = CY - h / 2;
   const backed = items.length > alertAt;
-  box(ctx, x, top, QUEUE_W, h, 'rgba(15,23,42,0.85)', backed ? 'rgba(248,113,113,0.7)' : 'rgba(148,163,184,0.35)');
-  label(ctx, title, x + QUEUE_W / 2, top + h + 12, '#94a3b8');
-  label(ctx, `${items.length} waiting`, x + QUEUE_W / 2, top - 12, backed ? '#f87171' : '#94a3b8');
+  box(ctx, x, top, QUEUE_W, h, 'rgba(0, 39, 51, 0.85)', backed ? 'rgba(242, 97, 122, 0.8)' : 'rgba(237, 241, 243, 0.3)');
+  label(ctx, title, x + QUEUE_W / 2, top + h + 12, UI.muted);
+  label(ctx, `${items.length} waiting`, x + QUEUE_W / 2, top - 12, backed ? BRAND.flamingoPink : UI.muted);
   if (items.length > visible) {
-    label(ctx, `+${items.length - visible}`, x + QUEUE_W / 2, top + h + 30, '#f87171');
+    label(ctx, `+${items.length - visible}`, x + QUEUE_W / 2, top + h + 30, BRAND.flamingoPink);
   }
   items.forEach((item, i) => {
     const slot = Math.min(i, visible - 1);
@@ -240,17 +241,17 @@ function render(ctx: CanvasRenderingContext2D, w: number, h: number, data: SimDa
   ctx.beginPath();
   ctx.arc(DONE.cx, DONE.cy, DONE.r, 0, Math.PI * 2);
   ctx.save();
-  ctx.shadowColor = '#8b5cf6';
+  ctx.shadowColor = BRAND.amethystPurple;
   ctx.shadowBlur = 18;
-  ctx.fillStyle = 'rgba(76, 29, 149, 0.55)';
+  ctx.fillStyle = 'rgba(99, 79, 125, 0.75)';
   ctx.fill();
   ctx.restore();
-  ctx.strokeStyle = '#a78bfa';
+  ctx.strokeStyle = UI.amethystLight;
   ctx.lineWidth = 1.5;
   ctx.stroke();
-  label(ctx, 'DONE', DONE.cx, DONE.cy - 12, '#ddd6fe');
+  label(ctx, 'DONE', DONE.cx, DONE.cy - 12, UI.text);
   ctx.font = '700 22px Inter, system-ui, sans-serif';
-  ctx.fillStyle = '#f5f3ff';
+  ctx.fillStyle = BRAND.talcWhite;
   ctx.textAlign = 'center';
   ctx.fillText(String(data.completed), DONE.cx, DONE.cy + 10);
 

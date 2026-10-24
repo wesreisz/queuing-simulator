@@ -1,7 +1,24 @@
 :root {
+  --talc-white: #ffffff;
+  --mist-grey: #edf1f3;
+  --onyx-black: #000000;
+  --wave-blue: #003d4f;
+  --flamingo-pink: #f2617a;
+  --turmeric-yellow: #cc850a;
+  --jade-green: #6b9e78;
+  --sapphire-blue: #47a1ad;
+  --amethyst-purple: #634f7d;
+
+  --panel: #00303e;
+  --panel-deep: #002733;
+  --text: var(--mist-grey);
+  --muted: #9db5bd;
+  --line: rgba(237, 241, 243, 0.14);
+  --line-strong: rgba(237, 241, 243, 0.28);
+
   font-family: Inter, system-ui, -apple-system, 'Segoe UI', sans-serif;
-  color: #e2e8f0;
-  background: #0b1222;
+  color: var(--text);
+  background: var(--wave-blue);
   -webkit-font-smoothing: antialiased;
 }
 
@@ -12,7 +29,7 @@
 body {
   margin: 0;
   min-height: 100vh;
-  background: radial-gradient(1200px 600px at 50% -10%, #142041 0%, #0b1222 60%);
+  background: var(--wave-blue);
 }
 
 button {
