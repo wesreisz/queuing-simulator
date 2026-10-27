@@ -414,3 +414,79 @@
 .credit a {
   color: var(--sapphire-blue);
 }
+
+@media (max-width: 768px) {
+  .app {
+    padding: 20px 12px 32px;
+  }
+
+  .hero {
+    margin-bottom: 20px;
+  }
+
+  .hero-qr {
+    width: 88px;
+    height: 88px;
+    margin: 0 0 8px 12px;
+  }
+
+  .hero h1 {
+    font-size: 30px;
+  }
+
+  .hero p {
+    font-size: 17px;
+  }
+
+  /* Metrics on top, simulation and chart in the middle, options below */
+  .sim-panel {
+    display: flex;
+    flex-direction: column;
+    height: auto;
+  }
+
+  .sidebar {
+    display: contents;
+  }
+
+  .sidebar > .section {
+    order: 3;
+    background: var(--panel-deep);
+  }
+
+  .sidebar > .section:first-child {
+    order: 1;
+  }
+
+  .stage-area {
+    order: 2;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .canvas-wrap {
+    flex: none;
+    height: 340px;
+  }
+
+  .chart-wrap {
+    height: 190px;
+  }
+
+  .chart-header {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .chart-keys {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .stat-row {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .stat-value {
+    font-size: 14px;
+  }
+}
