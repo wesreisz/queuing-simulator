@@ -80,6 +80,16 @@ function Slider({
 
 const pct = (v: number) => `${Math.round(v * 100)}%`;
 
+/** Release cadences, slowest first, so the slider maxes out at continuous deployment. */
+const DEPLOY_STEPS = [
+  { days: 20, label: 'Monthly' },
+  { days: 10, label: 'Every sprint' },
+  { days: 5, label: 'Weekly' },
+  { days: 2, label: 'Every 2 days' },
+  { days: 1, label: 'Daily' },
+  { days: 0, label: 'Continuous' },
+];
+
 function Card({ label, icon, value, sub, tone }: { label: string; icon?: ReactNode; value: ReactNode; sub: string; tone?: string }) {
   return (
     <div className="card">
@@ -261,6 +271,15 @@ export function Sidebar({
           onChange={(v) => onChange({ reviewWipLimit: v })}
         />
         <Slider label="QA WIP limit" value={params.qaWipLimit} min={1} max={40} step={1} onChange={(v) => onChange({ qaWipLimit: v })} />
+        <Slider
+          label="Deployment frequency"
+          value={Math.max(0, DEPLOY_STEPS.findIndex((s) => s.days === params.deployIntervalDays))}
+          min={0}
+          max={DEPLOY_STEPS.length - 1}
+          step={1}
+          format={(i) => DEPLOY_STEPS[i].label}
+          onChange={(i) => onChange({ deployIntervalDays: DEPLOY_STEPS[i].days })}
+        />
       </Section>
 
       <Section title="Friction" icon={<ShieldAlert size={12} />}>

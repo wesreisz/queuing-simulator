@@ -10,7 +10,7 @@ const WAITING_THRESHOLD_DAYS = 1;
 const MAX_DONE_ANIMATIONS = 200;
 /** Days a failed change spends travelling from Done back into the backlog. */
 export const RETURN_DAYS = 2;
-export type Stage = 'queue1' | 'dev' | 'queueReview' | 'review' | 'queue2' | 'qa' | 'done';
+export type Stage = 'queue1' | 'dev' | 'queueReview' | 'review' | 'queue2' | 'qa' | 'queueDeploy' | 'done';
 export type ItemState = 'flowing' | 'waiting' | 'blocked' | 'rework' | 'failed';
 
 export const STATE_COLORS: Record<ItemState, string> = {
@@ -54,6 +54,8 @@ export interface Params {
   reworkPct: number;
   /** Share of Done items that fail after release and return as fix work. */
   changeFailurePct: number;
+  /** Days between production releases; 0 deploys each item as soon as it passes QA. */
+  deployIntervalDays: number;
   devWipLimit: number;
   reviewWipLimit: number;
   qaWipLimit: number;
@@ -73,6 +75,10 @@ export interface SimData {
   queue1: Item[];
   queueReview: Item[];
   queue2: Item[];
+  /** Items that passed QA and are waiting for the next release. */
+  queueDeploy: Item[];
+  /** Sim time of the next release; Infinity while deploying continuously. */
+  nextDeploy: number;
   dev: Server[];
   review: Server[];
   qa: Server[];
@@ -122,6 +128,8 @@ export function createSim(params: Params): SimData {
     queue1: [],
     queueReview: [],
     queue2: [],
+    queueDeploy: [],
+    nextDeploy: params.deployIntervalDays > 0 ? params.deployIntervalDays : Infinity,
     dev: Array.from({ length: params.devServers }, newServer),
     review: Array.from({ length: params.reviewServers }, newServer),
     qa: Array.from({ length: params.qaServers }, newServer),
@@ -151,6 +159,7 @@ function flowKey(p: Params): string {
     p.reviewRejectPct,
     p.reworkPct,
     p.changeFailurePct,
+    p.deployIntervalDays,
   ].join('|');
 }
 
@@ -197,6 +206,23 @@ function spawn(data: SimData, failedChange = false) {
     y: 200,
   };
   (failedChange ? data.returning : data.queue1).push(item);
+}
+
+function deliver(data: SimData, params: Params, item: Item) {
+  item.stage = 'done';
+  data.completed++;
+  data.totalLead += data.time - item.arrivedAt;
+  data.totalValueAdded += item.valueAdded;
+  data.doneAnim.push(item);
+  if (data.doneAnim.length > MAX_DONE_ANIMATIONS) data.doneAnim.shift();
+  // A failed change stays delivered, but its fix re-enters the pipeline as new rework.
+  if (Math.random() < params.changeFailurePct) spawn(data, true);
+}
+
+function releaseAll(data: SimData, params: Params) {
+  const batch = data.queueDeploy;
+  data.queueDeploy = [];
+  for (const item of batch) deliver(data, params, item);
 }
 
 function substep(data: SimData, params: Params, dt: number) {
@@ -280,15 +306,10 @@ function substep(data: SimData, params: Params, dt: number) {
         if (Math.random() < params.reworkPct) {
           item.rework = true;
           enqueue(item, data.queue1, 'queue1', data.time);
+        } else if (params.deployIntervalDays > 0) {
+          enqueue(item, data.queueDeploy, 'queueDeploy', data.time);
         } else {
-          item.stage = 'done';
-          data.completed++;
-          data.totalLead += data.time - item.arrivedAt;
-          data.totalValueAdded += item.valueAdded;
-          data.doneAnim.push(item);
-          if (data.doneAnim.length > MAX_DONE_ANIMATIONS) data.doneAnim.shift();
-          // A failed change stays delivered, but its fix re-enters the pipeline as new rework.
-          if (Math.random() < params.changeFailurePct) spawn(data, true);
+          deliver(data, params, item);
         }
       }
     }
@@ -299,6 +320,18 @@ function substep(data: SimData, params: Params, dt: number) {
       s.item = item;
       s.remaining = randomDuration(1 / params.qaRate);
     }
+  }
+
+  const interval = params.deployIntervalDays;
+  if (interval > 0) {
+    if (!Number.isFinite(data.nextDeploy) || data.nextDeploy > data.time + interval) data.nextDeploy = data.time + interval;
+    if (data.time >= data.nextDeploy) {
+      releaseAll(data, params);
+      data.nextDeploy += interval;
+    }
+  } else {
+    data.nextDeploy = Infinity;
+    if (data.queueDeploy.length > 0) releaseAll(data, params);
   }
 
   data.idleTime.dev += idleShare(data.dev) * dt;
@@ -342,7 +375,8 @@ export function itemState(item: Item, now: number): ItemState {
   if (item.blocked) return 'blocked';
   if (item.failedChange) return 'failed';
   if (item.rework && item.stage === 'queue1') return 'rework';
-  if ((item.stage === 'queue1' || item.stage === 'queueReview' || item.stage === 'queue2') && now - item.enqueuedAt > WAITING_THRESHOLD_DAYS) {
+  const queued = item.stage === 'queue1' || item.stage === 'queueReview' || item.stage === 'queue2' || item.stage === 'queueDeploy';
+  if (queued && now - item.enqueuedAt > WAITING_THRESHOLD_DAYS) {
     return 'waiting';
   }
   return 'flowing';
@@ -414,7 +448,9 @@ export function computeMetrics(data: SimData, params: Params): Metrics {
     theoreticalLead:
       mmcTimeInSystem(lambdaDev, mu1, params.devServers) +
       mmcTimeInSystem(lambdaDev, mu2, params.reviewServers) +
-      mmcTimeInSystem(lambdaQa, mu3, params.qaServers),
+      mmcTimeInSystem(lambdaQa, mu3, params.qaServers) +
+      // On average an item waits half a release interval for the next deploy.
+      params.deployIntervalDays / 2,
     actualLead: data.completed > 0 ? data.totalLead / data.completed : 0,
     throughputPerSprint,
     history: data.history.slice(),

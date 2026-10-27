@@ -17,7 +17,10 @@ const QUEUE_ALERT = QUEUE_COLS * QUEUE_MIN_ROWS;
 const DEV = { x: 395, y: 50, w: 100, h: 300, cx: 445 };
 const REVIEW = { x: 680, y: 50, w: 100, h: 300, cx: 730 };
 const QA = { x: 950, y: 50, w: 100, h: 300, cx: 1000 };
-const DONE = { cx: 1120, cy: CY, r: 38 };
+const DEPLOY_X = 1075;
+const DONE = { cx: 1255, cy: CY, r: 38 };
+/** The layout is drawn 100 units right of where it sits on screen, leaving room for the deploy queue. */
+const CONTENT_SHIFT_X = -100;
 
 const DEV_COLOR = STAGE_COLORS.dev;
 const REVIEW_COLOR = STAGE_COLORS.review;
@@ -289,6 +292,7 @@ function render(ctx: CanvasRenderingContext2D, w: number, h: number, data: SimDa
   ctx.save();
   ctx.translate((w - VIEW_W * scale) / 2, (h - VIEW_H * scale) / 2);
   ctx.scale(scale, scale);
+  ctx.translate(CONTENT_SHIFT_X, 0);
 
   const now = data.time;
   const k = 1 - Math.exp(-dtReal * 10);
@@ -318,12 +322,13 @@ function render(ctx: CanvasRenderingContext2D, w: number, h: number, data: SimDa
   dashedLine(ctx, 790, CY, 810, CY);
   node(ctx, 790, CY);
 
-  // QA Queue -> QA -> Done
+  // QA Queue -> QA -> Ready to deploy -> Done
   dashedLine(ctx, 920, CY, 942, CY);
   fanAround(ctx, qaYs, 942, QA.cx, 1060);
   node(ctx, 942, CY);
-  dashedLine(ctx, 1060, CY, DONE.cx - DONE.r, CY);
+  dashedLine(ctx, 1060, CY, DEPLOY_X, CY);
   node(ctx, 1060, CY);
+  dashedLine(ctx, DEPLOY_X + QUEUE_W, CY, DONE.cx - DONE.r, CY);
 
   // Done
   ctx.beginPath();
@@ -356,6 +361,10 @@ function render(ctx: CanvasRenderingContext2D, w: number, h: number, data: SimDa
   drawServerItems(ctx, data.review, reviewYs, REVIEW.cx, now, k);
   drawGridQueue(ctx, data.queue2, 810, 'Ready for QA', QUEUE_ALERT, now, k, false);
   drawServerItems(ctx, data.qa, qaYs, QA.cx, now, k);
+  const deployTitle = Number.isFinite(data.nextDeploy)
+    ? `Deploy in ${Math.max(0, data.nextDeploy - now).toFixed(1)}d`
+    : 'Continuous deploy';
+  drawGridQueue(ctx, data.queueDeploy, DEPLOY_X, deployTitle, QUEUE_ALERT, now, k, false);
   data.doneAnim = data.doneAnim.filter((item) => {
     moveToward(item, DONE.cx, DONE.cy, k);
     if (Math.hypot(item.x - DONE.cx, item.y - DONE.cy) < DONE.r - 6) return false;
