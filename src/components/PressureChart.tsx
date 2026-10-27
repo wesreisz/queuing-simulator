@@ -5,6 +5,8 @@ import { BRAND, STAGE_COLORS, UI } from '../theme';
 const MAX_PCT = 200;
 const OPTIMAL_PCT = 80;
 const PAD = { left: 40, right: 48, top: 10, bottom: 34 };
+const MIN_TICK_PX = 26;
+const TICK_STEPS = [2, 5, 10, 20, 30];
 
 interface Props {
   history: PressureSample[];
@@ -83,7 +85,9 @@ function drawChart(canvas: HTMLCanvasElement | null, w: number, h: number, data:
   ctx.fillStyle = UI.muted;
   ctx.font = '9px Inter, system-ui, sans-serif';
   ctx.textAlign = 'center';
-  for (let i = 0; i < HISTORY_LENGTH; i += 2) {
+  const samplePx = plotW / (HISTORY_LENGTH - 1);
+  const tickStep = TICK_STEPS.find((s) => s * samplePx >= MIN_TICK_PX) ?? TICK_STEPS[TICK_STEPS.length - 1];
+  for (let i = HISTORY_LENGTH - 1; i >= 0; i -= tickStep) {
     const ago = ((HISTORY_LENGTH - 1 - i) * HISTORY_SAMPLE_DAYS) / DAYS_PER_SPRINT;
     ctx.fillText(ago.toFixed(1), xOf(i), PAD.top + plotH + 10);
   }
