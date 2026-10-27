@@ -8,7 +8,6 @@ const BLOCK_MEAN_DAYS = 1.5;
 const MAX_SUBSTEP_DAYS = 0.05;
 const WAITING_THRESHOLD_DAYS = 1;
 const MAX_DONE_ANIMATIONS = 200;
-
 export type Stage = 'queue1' | 'dev' | 'queueReview' | 'review' | 'queue2' | 'qa' | 'done';
 export type ItemState = 'flowing' | 'waiting' | 'blocked' | 'rework';
 
@@ -76,6 +75,11 @@ export interface SimData {
   totalValueAdded: number;
   history: PressureSample[];
   lastSample: number;
+  /** Idle server-days per server for each stage, accumulated since idleSince. */
+  idleTime: { dev: number; review: number; qa: number };
+  idleSince: number;
+  /** Flow-affecting params the idle averages were collected under; a change restarts them. */
+  idleKey: string;
 }
 
 export interface Metrics {
@@ -118,7 +122,34 @@ export function createSim(params: Params): SimData {
     totalValueAdded: 0,
     history: [],
     lastSample: 0,
+    idleTime: { dev: 0, review: 0, qa: 0 },
+    idleSince: 0,
+    idleKey: flowKey(params),
   };
+}
+
+function flowKey(p: Params): string {
+  return [
+    p.arrivalRate,
+    p.devServers,
+    p.reviewServers,
+    p.qaServers,
+    p.devRate,
+    p.reviewRate,
+    p.qaRate,
+    p.blockingPct,
+    p.reviewRejectPct,
+    p.reworkPct,
+  ].join('|');
+}
+
+const idleShare = (servers: Server[]) =>
+  servers.length > 0 ? servers.filter((s) => !s.item).length / servers.length : 0;
+
+/** Average share of a stage's servers that sat idle since the run started or flow settings last changed. */
+export function averageIdle(data: SimData, stage: 'dev' | 'review' | 'qa'): number {
+  const elapsed = data.time - data.idleSince;
+  return elapsed > 0 ? data.idleTime[stage] / elapsed : idleShare(data[stage]);
 }
 
 function syncServers(servers: Server[], count: number, queue: Item[], queueStage: Stage, now: number) {
@@ -252,6 +283,10 @@ function substep(data: SimData, params: Params, dt: number) {
     }
   }
 
+  data.idleTime.dev += idleShare(data.dev) * dt;
+  data.idleTime.review += idleShare(data.review) * dt;
+  data.idleTime.qa += idleShare(data.qa) * dt;
+
   if (data.time - data.lastSample >= HISTORY_SAMPLE_DAYS) {
     data.lastSample = data.time;
     data.history.push({
@@ -264,6 +299,12 @@ function substep(data: SimData, params: Params, dt: number) {
 }
 
 export function step(data: SimData, params: Params, dt: number) {
+  const key = flowKey(params);
+  if (key !== data.idleKey) {
+    data.idleKey = key;
+    data.idleSince = data.time;
+    data.idleTime = { dev: 0, review: 0, qa: 0 };
+  }
   syncServers(data.dev, params.devServers, data.queue1, 'queue1', data.time);
   syncServers(data.review, params.reviewServers, data.queueReview, 'queueReview', data.time);
   syncServers(data.qa, params.qaServers, data.queue2, 'queue2', data.time);

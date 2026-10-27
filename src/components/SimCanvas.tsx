@@ -1,5 +1,5 @@
 import { useEffect, useRef, type RefObject } from 'react';
-import { itemState, STATE_COLORS, type Item, type Server, type SimData } from '../sim/engine';
+import { averageIdle, itemState, STATE_COLORS, type Item, type Server, type SimData } from '../sim/engine';
 import { BRAND, STAGE_COLORS, UI } from '../theme';
 
 const VIEW_W = 1200;
@@ -23,6 +23,8 @@ const DEV_COLOR = STAGE_COLORS.dev;
 const REVIEW_COLOR = STAGE_COLORS.review;
 const QA_COLOR = STAGE_COLORS.qa;
 const LABEL_FONT = '600 16px "JetBrains Mono", ui-monospace, monospace';
+const IDLE_FONT = '500 12px "JetBrains Mono", ui-monospace, monospace';
+const IDLE_ALERT = 0.25;
 
 interface Props {
   dataRef: RefObject<SimData>;
@@ -101,6 +103,19 @@ function stageColumn(ctx: CanvasRenderingContext2D, s: typeof DEV, color: string
   ctx.lineWidth = 1;
   ctx.stroke();
   label(ctx, title, s.x + s.w / 2, s.y + s.h + 22, UI.text);
+}
+
+function idleLabel(ctx: CanvasRenderingContext2D, s: typeof DEV, servers: Server[], idle: number) {
+  const free = servers.filter((sv) => !sv.item).length;
+  ctx.font = IDLE_FONT;
+  ctx.fillStyle = idle > IDLE_ALERT ? BRAND.turmericYellow : UI.muted;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(
+    `run avg ${Math.round(idle * 100)}% idle · ${free}/${servers.length} waiting now`,
+    s.x + s.w / 2,
+    s.y + s.h + 41,
+  );
 }
 
 function drawServers(ctx: CanvasRenderingContext2D, servers: Server[], cx: number, color: string) {
@@ -214,6 +229,9 @@ function render(ctx: CanvasRenderingContext2D, w: number, h: number, data: SimDa
   stageColumn(ctx, DEV, DEV_COLOR, 'STAGE 1: CODE DEV');
   stageColumn(ctx, REVIEW, REVIEW_COLOR, 'STAGE 2: CODE REVIEW');
   stageColumn(ctx, QA, QA_COLOR, 'STAGE 3: QA');
+  idleLabel(ctx, DEV, data.dev, averageIdle(data, 'dev'));
+  idleLabel(ctx, REVIEW, data.review, averageIdle(data, 'review'));
+  idleLabel(ctx, QA, data.qa, averageIdle(data, 'qa'));
 
   // Backlog -> Code Dev -> Review Queue
   dashedLine(ctx, 326, CY, 370, CY);
