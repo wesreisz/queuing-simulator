@@ -6,6 +6,15 @@
 
 .hero {
   margin-bottom: 32px;
+  display: flow-root;
+}
+
+.hero-qr {
+  float: right;
+  width: 140px;
+  height: 140px;
+  margin: 0 0 12px 24px;
+  border-radius: 6px;
 }
 
 .hero h1 {

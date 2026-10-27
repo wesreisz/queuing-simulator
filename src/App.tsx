@@ -7,6 +7,7 @@ import { SimCanvas } from './components/SimCanvas';
 import { PressureChart } from './components/PressureChart';
 import { Sidebar } from './components/Sidebar';
 import { STAGE_COLORS } from './theme';
+import qrCode from './assets/qr-code.png';
 import './App.css';
 
 const LEGEND = [
@@ -40,6 +41,7 @@ export default function App() {
   return (
     <div className="app">
       <header className="hero">
+        <img className="hero-qr" src={qrCode} alt="QR code" />
         <h1>Queuing Theory Simulator</h1>
         <p>
           What happens to the system when we optimize some parts of software delivery and not the entire value chain?
