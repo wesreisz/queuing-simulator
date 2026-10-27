@@ -17,6 +17,8 @@ export const UI = {
   muted: '#9DB5BD',
   line: 'rgba(237, 241, 243, 0.14)',
   amethystLight: '#9C88B8',
+  /** Deeper than flamingo pink so failed changes read differently from blocked work. */
+  failureRed: '#E0262F',
 } as const;
 
 export const STAGE_COLORS = {

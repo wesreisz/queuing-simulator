@@ -291,6 +291,15 @@ export function Sidebar({
           format={pct}
           onChange={(v) => onChange({ reworkPct: v })}
         />
+        <Slider
+          label="Change failure rate %"
+          value={params.changeFailurePct}
+          min={0}
+          max={0.8}
+          step={0.01}
+          format={pct}
+          onChange={(v) => onChange({ changeFailurePct: v })}
+        />
       </Section>
     </aside>
   );

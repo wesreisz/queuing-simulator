@@ -15,6 +15,7 @@ const LEGEND = [
   { color: STATE_COLORS.waiting, text: 'Queued for over a day' },
   { color: STATE_COLORS.blocked, text: 'Stuck on a blocker' },
   { color: STATE_COLORS.rework, text: 'Sent back for rework' },
+  { color: STATE_COLORS.failed, text: 'Fixing a failed change' },
 ];
 
 export default function App() {

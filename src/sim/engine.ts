@@ -1,4 +1,4 @@
-import { BRAND } from '../theme';
+import { BRAND, UI } from '../theme';
 
 export const DAYS_PER_SPRINT = 10;
 export const HISTORY_SAMPLE_DAYS = 1;
@@ -8,14 +8,17 @@ const BLOCK_MEAN_DAYS = 1.5;
 const MAX_SUBSTEP_DAYS = 0.05;
 const WAITING_THRESHOLD_DAYS = 1;
 const MAX_DONE_ANIMATIONS = 200;
+/** Days a failed change spends travelling from Done back into the backlog. */
+export const RETURN_DAYS = 2;
 export type Stage = 'queue1' | 'dev' | 'queueReview' | 'review' | 'queue2' | 'qa' | 'done';
-export type ItemState = 'flowing' | 'waiting' | 'blocked' | 'rework';
+export type ItemState = 'flowing' | 'waiting' | 'blocked' | 'rework' | 'failed';
 
 export const STATE_COLORS: Record<ItemState, string> = {
   flowing: BRAND.jadeGreen,
   waiting: BRAND.turmericYellow,
   blocked: BRAND.flamingoPink,
   rework: BRAND.sapphireBlue,
+  failed: UI.failureRed,
 };
 
 export interface Item {
@@ -26,6 +29,8 @@ export interface Item {
   arrivedAt: number;
   enqueuedAt: number;
   valueAdded: number;
+  /** Fix work for a change that failed after reaching Done. */
+  failedChange: boolean;
   x: number;
   y: number;
 }
@@ -47,6 +52,8 @@ export interface Params {
   blockingPct: number;
   reviewRejectPct: number;
   reworkPct: number;
+  /** Share of Done items that fail after release and return as fix work. */
+  changeFailurePct: number;
   devWipLimit: number;
   reviewWipLimit: number;
   qaWipLimit: number;
@@ -70,6 +77,8 @@ export interface SimData {
   review: Server[];
   qa: Server[];
   doneAnim: Item[];
+  /** Failed changes on their way back to the backlog, oldest first; they join queue1 after RETURN_DAYS. */
+  returning: Item[];
   completed: number;
   totalLead: number;
   totalValueAdded: number;
@@ -117,6 +126,7 @@ export function createSim(params: Params): SimData {
     review: Array.from({ length: params.reviewServers }, newServer),
     qa: Array.from({ length: params.qaServers }, newServer),
     doneAnim: [],
+    returning: [],
     completed: 0,
     totalLead: 0,
     totalValueAdded: 0,
@@ -140,6 +150,7 @@ function flowKey(p: Params): string {
     p.blockingPct,
     p.reviewRejectPct,
     p.reworkPct,
+    p.changeFailurePct,
   ].join('|');
 }
 
@@ -172,19 +183,20 @@ function enqueue(item: Item, queue: Item[], stage: Stage, now: number) {
   queue.push(item);
 }
 
-function spawn(data: SimData) {
+function spawn(data: SimData, failedChange = false) {
   const item: Item = {
     id: data.nextId++,
     stage: 'queue1',
     blocked: false,
-    rework: false,
+    rework: failedChange,
     arrivedAt: data.time,
     enqueuedAt: data.time,
     valueAdded: 0,
+    failedChange,
     x: 168,
     y: 200,
   };
-  data.queue1.push(item);
+  (failedChange ? data.returning : data.queue1).push(item);
 }
 
 function substep(data: SimData, params: Params, dt: number) {
@@ -199,6 +211,10 @@ function substep(data: SimData, params: Params, dt: number) {
     }
   } else {
     data.nextArrival = Infinity;
+  }
+
+  while (data.returning.length > 0 && data.time - data.returning[0].arrivedAt >= RETURN_DAYS) {
+    enqueue(data.returning.shift()!, data.queue1, 'queue1', data.time);
   }
 
   for (const s of data.dev) {
@@ -271,6 +287,8 @@ function substep(data: SimData, params: Params, dt: number) {
           data.totalValueAdded += item.valueAdded;
           data.doneAnim.push(item);
           if (data.doneAnim.length > MAX_DONE_ANIMATIONS) data.doneAnim.shift();
+          // A failed change stays delivered, but its fix re-enters the pipeline as new rework.
+          if (Math.random() < params.changeFailurePct) spawn(data, true);
         }
       }
     }
@@ -322,6 +340,7 @@ export const qaWip = (data: SimData) => data.queue2.length + data.qa.filter((s) 
 
 export function itemState(item: Item, now: number): ItemState {
   if (item.blocked) return 'blocked';
+  if (item.failedChange) return 'failed';
   if (item.rework && item.stage === 'queue1') return 'rework';
   if ((item.stage === 'queue1' || item.stage === 'queueReview' || item.stage === 'queue2') && now - item.enqueuedAt > WAITING_THRESHOLD_DAYS) {
     return 'waiting';
@@ -349,9 +368,15 @@ export function mmcTimeInSystem(lambda: number, mu: number, c: number): number {
   return wq + 1 / mu;
 }
 
+/** Arrival rate into QA, including QA rework loops and fix work from failed changes. */
+function qaArrivalRate(params: Params): number {
+  const delivered = params.arrivalRate / Math.max(0.01, 1 - params.changeFailurePct);
+  return delivered / Math.max(0.01, 1 - params.reworkPct);
+}
+
 /** Utilization (rho) of Code Dev, Code Review and QA, in that order. */
 export function stageUtilisations(params: Params): [number, number, number] {
-  const lambdaQa = params.arrivalRate / Math.max(0.01, 1 - params.reworkPct);
+  const lambdaQa = qaArrivalRate(params);
   const lambdaDev = lambdaQa / Math.max(0.01, 1 - params.reviewRejectPct);
   const devCapacity = params.devServers * params.devRate;
   const reviewCapacity = params.reviewServers * params.reviewRate;
@@ -366,7 +391,7 @@ export function stageUtilisations(params: Params): [number, number, number] {
 }
 
 export function computeMetrics(data: SimData, params: Params): Metrics {
-  const lambdaQa = params.arrivalRate / Math.max(0.01, 1 - params.reworkPct);
+  const lambdaQa = qaArrivalRate(params);
   const lambdaDev = lambdaQa / Math.max(0.01, 1 - params.reviewRejectPct);
   const mu1 = params.devRate;
   const mu2 = params.reviewRate;

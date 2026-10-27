@@ -1,5 +1,5 @@
 import { useEffect, useRef, type RefObject } from 'react';
-import { averageIdle, itemState, STATE_COLORS, type Item, type Server, type SimData } from '../sim/engine';
+import { averageIdle, itemState, RETURN_DAYS, STATE_COLORS, type Item, type Server, type SimData } from '../sim/engine';
 import { BRAND, STAGE_COLORS, UI } from '../theme';
 
 const VIEW_W = 1200;
@@ -22,9 +22,28 @@ const DONE = { cx: 1120, cy: CY, r: 38 };
 const DEV_COLOR = STAGE_COLORS.dev;
 const REVIEW_COLOR = STAGE_COLORS.review;
 const QA_COLOR = STAGE_COLORS.qa;
-const LABEL_FONT = '600 16px "JetBrains Mono", ui-monospace, monospace';
-const IDLE_FONT = '500 12px "JetBrains Mono", ui-monospace, monospace';
+const MONO = '"JetBrains Mono", ui-monospace, monospace';
 const IDLE_ALERT = 0.25;
+/** Below this view scale, stage titles and idle text split onto two lines. */
+const COMPACT_SCALE = 0.7;
+
+const RETURN_LANE_Y = 24;
+const RETURN_END_X = 271;
+/** Route failed changes take from Done up over the stages and down into the backlog. */
+const RETURN_PATH: [number, number][] = [
+  [DONE.cx, DONE.cy],
+  [DONE.cx, RETURN_LANE_Y],
+  [RETURN_END_X, RETURN_LANE_Y],
+  [RETURN_END_X, CY - 50],
+];
+
+let viewScale = 1;
+const isCompact = () => viewScale < COMPACT_SCALE;
+
+/** Font size in view units: at least `minPx` on screen, at most `base * maxGrow`. */
+function textSize(base: number, minPx: number, maxGrow = 3): number {
+  return Math.min(base * maxGrow, Math.max(base, minPx / viewScale));
+}
 
 interface Props {
   dataRef: RefObject<SimData>;
@@ -51,10 +70,10 @@ function drawGrid(ctx: CanvasRenderingContext2D, w: number, h: number) {
   ctx.stroke();
 }
 
-function label(ctx: CanvasRenderingContext2D, text: string, x: number, y: number, color: string, align: CanvasTextAlign = 'center') {
-  ctx.font = LABEL_FONT;
+function label(ctx: CanvasRenderingContext2D, text: string, x: number, y: number, color: string, size = 16) {
+  ctx.font = `600 ${size}px ${MONO}`;
   ctx.fillStyle = color;
-  ctx.textAlign = align;
+  ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.fillText(text, x, y);
 }
@@ -91,7 +110,8 @@ function node(ctx: CanvasRenderingContext2D, x: number, y: number) {
   ctx.stroke();
 }
 
-function stageColumn(ctx: CanvasRenderingContext2D, s: typeof DEV, color: string, title: string) {
+/** Draws the stage column and its title; returns the y just below the title. */
+function stageColumn(ctx: CanvasRenderingContext2D, s: typeof DEV, color: string, title: string): number {
   const grad = ctx.createLinearGradient(0, s.y, 0, s.y + s.h);
   grad.addColorStop(0, `${color}38`);
   grad.addColorStop(1, `${color}14`);
@@ -102,20 +122,27 @@ function stageColumn(ctx: CanvasRenderingContext2D, s: typeof DEV, color: string
   ctx.strokeStyle = `${color}99`;
   ctx.lineWidth = 1;
   ctx.stroke();
-  label(ctx, title, s.x + s.w / 2, s.y + s.h + 22, UI.text);
+  const size = textSize(16, 11);
+  const lines = isCompact() ? title.split(': ') : [title];
+  const lh = size * 1.2;
+  const top = s.y + s.h + 12;
+  lines.forEach((line, i) => label(ctx, line, s.x + s.w / 2, top + lh * (i + 0.5), UI.text, size));
+  return top + lh * lines.length;
 }
 
-function idleLabel(ctx: CanvasRenderingContext2D, s: typeof DEV, servers: Server[], idle: number) {
+function idleLabel(ctx: CanvasRenderingContext2D, s: typeof DEV, servers: Server[], idle: number, top: number) {
   const free = servers.filter((sv) => !sv.item).length;
-  ctx.font = IDLE_FONT;
+  const pct = Math.round(idle * 100);
+  const lines = isCompact()
+    ? [`${pct}% idle avg`, `${free}/${servers.length} idle now`]
+    : [`run avg ${pct}% idle · ${free}/${servers.length} waiting now`];
+  const size = textSize(12, 9);
+  const lh = size * 1.25;
+  ctx.font = `500 ${size}px ${MONO}`;
   ctx.fillStyle = idle > IDLE_ALERT ? BRAND.turmericYellow : UI.muted;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-  ctx.fillText(
-    `run avg ${Math.round(idle * 100)}% idle · ${free}/${servers.length} waiting now`,
-    s.x + s.w / 2,
-    s.y + s.h + 41,
-  );
+  lines.forEach((line, i) => ctx.fillText(line, s.x + s.w / 2, top + 4 + lh * (i + 0.5)));
 }
 
 function drawServers(ctx: CanvasRenderingContext2D, servers: Server[], cx: number, color: string) {
@@ -165,6 +192,46 @@ function moveToward(item: Item, tx: number, ty: number, k: number) {
   item.y += (ty - item.y) * k;
 }
 
+/** Point a fraction `t` (0..1) of the way along RETURN_PATH. */
+function pointOnReturnPath(t: number): [number, number] {
+  const segs = RETURN_PATH.slice(1).map((p, i) => {
+    const [x0, y0] = RETURN_PATH[i];
+    return { x0, y0, x1: p[0], y1: p[1], len: Math.hypot(p[0] - x0, p[1] - y0) };
+  });
+  let d = Math.min(1, Math.max(0, t)) * segs.reduce((sum, s) => sum + s.len, 0);
+  for (const s of segs) {
+    if (d <= s.len) {
+      const f = s.len > 0 ? d / s.len : 0;
+      return [s.x0 + (s.x1 - s.x0) * f, s.y0 + (s.y1 - s.y0) * f];
+    }
+    d -= s.len;
+  }
+  return RETURN_PATH[RETURN_PATH.length - 1];
+}
+
+function drawReturning(ctx: CanvasRenderingContext2D, items: Item[], now: number) {
+  if (items.length === 0) return;
+  ctx.save();
+  ctx.setLineDash([4, 5]);
+  ctx.strokeStyle = `${STATE_COLORS.failed}99`;
+  ctx.lineWidth = 1.2;
+  ctx.beginPath();
+  ctx.moveTo(DONE.cx, DONE.cy - DONE.r);
+  RETURN_PATH.slice(1).forEach(([x, y]) => ctx.lineTo(x, y));
+  ctx.stroke();
+  ctx.restore();
+  items.forEach((item) => {
+    [item.x, item.y] = pointOnReturnPath((now - item.arrivedAt) / RETURN_DAYS);
+    drawItem(ctx, item, now, 4.5);
+  });
+  const size = textSize(12, 9, 1.6);
+  ctx.font = `600 ${size}px ${MONO}`;
+  ctx.fillStyle = STATE_COLORS.failed;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'bottom';
+  ctx.fillText('← failed changes returning to backlog', (DONE.cx + RETURN_END_X) / 2, RETURN_LANE_Y - 4);
+}
+
 function drawGridQueue(
   ctx: CanvasRenderingContext2D,
   items: Item[],
@@ -181,10 +248,12 @@ function drawGridQueue(
   const top = CY - h / 2;
   const backed = items.length > alertAt;
   box(ctx, x, top, QUEUE_W, h, 'rgba(0, 39, 51, 0.85)', backed ? 'rgba(242, 97, 122, 0.8)' : 'rgba(237, 241, 243, 0.3)');
-  label(ctx, title, x + QUEUE_W / 2, top + h + 12, UI.muted);
-  label(ctx, `${items.length} waiting`, x + QUEUE_W / 2, top - 12, backed ? BRAND.flamingoPink : UI.muted);
+  const size = textSize(16, 9, 1.6);
+  const gap = Math.max(12, size * 0.75);
+  label(ctx, title, x + QUEUE_W / 2, top + h + gap, UI.muted, size);
+  label(ctx, `${items.length} waiting`, x + QUEUE_W / 2, top - gap, backed ? BRAND.flamingoPink : UI.muted, size);
   if (items.length > visible) {
-    label(ctx, `+${items.length - visible}`, x + QUEUE_W / 2, top + h + 30, BRAND.flamingoPink);
+    label(ctx, `+${items.length - visible}`, x + QUEUE_W / 2, top + h + gap + size * 1.15, BRAND.flamingoPink, size);
   }
   items.forEach((item, i) => {
     const slot = Math.min(i, visible - 1);
@@ -216,6 +285,7 @@ function render(ctx: CanvasRenderingContext2D, w: number, h: number, data: SimDa
   drawGrid(ctx, w, h);
 
   const scale = Math.min(w / VIEW_W, h / VIEW_H);
+  viewScale = scale;
   ctx.save();
   ctx.translate((w - VIEW_W * scale) / 2, (h - VIEW_H * scale) / 2);
   ctx.scale(scale, scale);
@@ -226,12 +296,14 @@ function render(ctx: CanvasRenderingContext2D, w: number, h: number, data: SimDa
   const reviewYs = serverYs(data.review.length);
   const qaYs = serverYs(data.qa.length);
 
-  stageColumn(ctx, DEV, DEV_COLOR, 'STAGE 1: CODE DEV');
-  stageColumn(ctx, REVIEW, REVIEW_COLOR, 'STAGE 2: CODE REVIEW');
-  stageColumn(ctx, QA, QA_COLOR, 'STAGE 3: QA');
-  idleLabel(ctx, DEV, data.dev, averageIdle(data, 'dev'));
-  idleLabel(ctx, REVIEW, data.review, averageIdle(data, 'review'));
-  idleLabel(ctx, QA, data.qa, averageIdle(data, 'qa'));
+  drawReturning(ctx, data.returning, now);
+
+  const devBottom = stageColumn(ctx, DEV, DEV_COLOR, 'STAGE 1: CODE DEV');
+  const reviewBottom = stageColumn(ctx, REVIEW, REVIEW_COLOR, 'STAGE 2: CODE REVIEW');
+  const qaBottom = stageColumn(ctx, QA, QA_COLOR, 'STAGE 3: QA');
+  idleLabel(ctx, DEV, data.dev, averageIdle(data, 'dev'), devBottom);
+  idleLabel(ctx, REVIEW, data.review, averageIdle(data, 'review'), reviewBottom);
+  idleLabel(ctx, QA, data.qa, averageIdle(data, 'qa'), qaBottom);
 
   // Backlog -> Code Dev -> Review Queue
   dashedLine(ctx, 326, CY, 370, CY);
@@ -265,11 +337,13 @@ function render(ctx: CanvasRenderingContext2D, w: number, h: number, data: SimDa
   ctx.strokeStyle = UI.amethystLight;
   ctx.lineWidth = 1.5;
   ctx.stroke();
-  label(ctx, 'DONE', DONE.cx, DONE.cy - 12, UI.text);
-  ctx.font = '700 22px Inter, system-ui, sans-serif';
+  const doneSize = textSize(16, 10, 1.5);
+  const countSize = textSize(22, 12, 1.5);
+  label(ctx, 'DONE', DONE.cx, DONE.cy - doneSize * 0.75, UI.text, doneSize);
+  ctx.font = `700 ${countSize}px Inter, system-ui, sans-serif`;
   ctx.fillStyle = BRAND.talcWhite;
   ctx.textAlign = 'center';
-  ctx.fillText(String(data.completed), DONE.cx, DONE.cy + 10);
+  ctx.fillText(String(data.completed), DONE.cx, DONE.cy + countSize * 0.45);
 
   drawServers(ctx, data.dev, DEV.cx, DEV_COLOR);
   drawServers(ctx, data.review, REVIEW.cx, REVIEW_COLOR);
