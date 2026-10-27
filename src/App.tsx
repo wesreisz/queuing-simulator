@@ -8,6 +8,7 @@ import { PressureChart } from './components/PressureChart';
 import { Sidebar } from './components/Sidebar';
 import { STAGE_COLORS } from './theme';
 import qrCode from './assets/qr-code.png';
+import { VERSION } from './version';
 import './App.css';
 
 const LEGEND = [
@@ -126,6 +127,7 @@ export default function App() {
         </a>
         .
       </footer>
+      <div className="version">v{VERSION}</div>
     </div>
   );
 }

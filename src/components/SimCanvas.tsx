@@ -253,10 +253,11 @@ function drawGridQueue(
   box(ctx, x, top, QUEUE_W, h, 'rgba(0, 39, 51, 0.85)', backed ? 'rgba(242, 97, 122, 0.8)' : 'rgba(237, 241, 243, 0.3)');
   const size = textSize(16, 9, 1.6);
   const gap = Math.max(12, size * 0.75);
-  label(ctx, title, x + QUEUE_W / 2, top + h + gap, UI.muted, size);
+  const titleLines = title.split('\n');
+  titleLines.forEach((line, i) => label(ctx, line, x + QUEUE_W / 2, top + h + gap + i * size * 1.15, UI.muted, size));
   label(ctx, `${items.length} waiting`, x + QUEUE_W / 2, top - gap, backed ? BRAND.flamingoPink : UI.muted, size);
   if (items.length > visible) {
-    label(ctx, `+${items.length - visible}`, x + QUEUE_W / 2, top + h + gap + size * 1.15, BRAND.flamingoPink, size);
+    label(ctx, `+${items.length - visible}`, x + QUEUE_W / 2, top + h + gap + titleLines.length * size * 1.15, BRAND.flamingoPink, size);
   }
   items.forEach((item, i) => {
     const slot = Math.min(i, visible - 1);
@@ -359,11 +360,11 @@ function render(ctx: CanvasRenderingContext2D, w: number, h: number, data: SimDa
   drawServerItems(ctx, data.dev, devYs, DEV.cx, now, k);
   drawGridQueue(ctx, data.queueReview, 540, 'PRs', QUEUE_ALERT, now, k, false);
   drawServerItems(ctx, data.review, reviewYs, REVIEW.cx, now, k);
-  drawGridQueue(ctx, data.queue2, 810, 'Ready for QA', QUEUE_ALERT, now, k, false);
+  drawGridQueue(ctx, data.queue2, 810, 'Ready\nfor QA', QUEUE_ALERT, now, k, false);
   drawServerItems(ctx, data.qa, qaYs, QA.cx, now, k);
   const deployTitle = Number.isFinite(data.nextDeploy)
-    ? `Deploy in ${Math.max(0, data.nextDeploy - now).toFixed(1)}d`
-    : 'Continuous deploy';
+    ? `Deploy\nin ${Math.max(0, data.nextDeploy - now).toFixed(1)}d`
+    : 'Continuous\ndeploy';
   drawGridQueue(ctx, data.queueDeploy, DEPLOY_X, deployTitle, QUEUE_ALERT, now, k, false);
   data.doneAnim = data.doneAnim.filter((item) => {
     moveToward(item, DONE.cx, DONE.cy, k);

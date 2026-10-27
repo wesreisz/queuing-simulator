@@ -1,0 +1,19 @@
+#!/bin/sh
+# Bumps the build number in src/version.ts (1.0.001 -> 1.0.002).
+# Skipped when the commit already changes that file, so a version set by hand is kept.
+VERSION_FILE=src/version.ts
+
+if git diff --cached --name-only | grep -qx "$VERSION_FILE"; then
+  exit 0
+fi
+
+node -e '
+const fs = require("fs");
+const file = process.argv[1];
+const src = fs.readFileSync(file, "utf8");
+const next = src.replace(/(\d+\.\d+\.)(\d+)/, (_, head, build) =>
+  head + String(Number(build) + 1).padStart(build.length, "0"));
+fs.writeFileSync(file, next);
+' "$VERSION_FILE" || exit 1
+
+git add "$VERSION_FILE"

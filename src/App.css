@@ -38,6 +38,7 @@
 .sim-panel {
   display: grid;
   grid-template-columns: 240px 1fr;
+  grid-template-rows: minmax(0, 1fr);
   height: 640px;
   border: 1px solid var(--line);
   border-radius: 10px;
@@ -50,7 +51,9 @@
 .sidebar {
   border-right: 1px solid var(--line);
   overflow-y: auto;
+  min-height: 0;
   background: var(--panel-deep);
+  padding-bottom: 64px;
 }
 
 .section {
@@ -413,6 +416,13 @@
 
 .credit a {
   color: var(--sapphire-blue);
+}
+
+.version {
+  margin-top: 12px;
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 10px;
+  color: var(--muted);
 }
 
 @media (max-width: 768px) {
